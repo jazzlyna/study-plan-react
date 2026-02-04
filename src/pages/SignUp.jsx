@@ -32,7 +32,7 @@ function SignUp() {
 
       // 2. Handle Success UI
       setIsSuccess(true);
-      setMessage("Account created! 📧 Please check your email inbox to activate.");
+      setMessage("Account created! You can now sign in.");
       setStudent_name("");
       setStudent_email("");
       setStudent_password("");

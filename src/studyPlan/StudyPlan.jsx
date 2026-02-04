@@ -15,7 +15,8 @@ function StudyPlan({ user }) {
   const [selectedSem, setSelectedSem] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('All Courses');
+const [activeMainTab, setActiveMainTab] = useState('core'); // 'core' or 'spec'
+const [activeSubTab, setActiveSubTab] = useState('All');   // 'All', 'NR', 'UR', etc.
   const [curriculumPool, setCurriculumPool] = useState([]);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [semesterCredits, setSemesterCredits] = useState({});
@@ -217,36 +218,70 @@ function StudyPlan({ user }) {
     }
   }, []);
 
-  const fetchPool = useCallback(async (tabName) => {
-    const fetchMap = {
-      'Core Discipline': () => api.getCoreDisciplineCourses(user.student_id),
-      'NR': () => api.getNationalRequirementCourses(user.student_id),
-      'UR': () => api.getUniversityRequirementCourses(user.student_id),
-      'CC': () => api.getCommonCourses(user.student_id),
-      'CD': () => api.getCommonCourses(user.student_id),
-      'Core Specialise': () => api.getCoreSpecializationCourses(user.student_id),
-      'All Courses': () => api.getCourses()
-    };
-
-    const fetchFunction = fetchMap[tabName] || (() => api.getCourses());
+const fetchPool = useCallback(async (tabName) => {
+  const fetchMap = {
+    // General Pathway tabs
+    'All': () => api.getCourses(),
+    'NR': () => api.getNationalRequirementCourses(user.student_id),
+    'UR': () => api.getUniversityRequirementCourses(user.student_id),
+    'CC': () => api.getCommonCourses(user.student_id),
+    'CD': () => api.getCoreDisciplineCourses(user.student_id),
     
-    try {
-      const data = await fetchFunction();
-      const rawList = Array.isArray(data) ? data : (data.courses || []);
-      const grouped = rawList.reduce((acc, course) => {
-        const sem = course.course_semester || 'Other';
-        if (!acc[sem]) acc[sem] = [];
-        acc[sem].push(course);
-        return acc;
-      }, {});
-      
-      setCurriculumPool(grouped);
-      setExpandedSem(null);
-    } catch (err) { 
-      console.error(err); 
-      setCurriculumPool({});
-    }
-  }, [user?.student_id]);
+    // Core Specialisation tabs
+    'Offshore': async () => {
+      const allCourses = await api.getCoreSpecializationCourses(user.student_id);
+      // Filter for Offshore specialization - you may need to adjust this based on your backend data structure
+      return Array.isArray(allCourses) 
+        ? allCourses.filter(course => course.specialization === 'Offshore' || 
+                                     course.course_name?.includes('Offshore'))
+        : [];
+    },
+    'Environmental': async () => {
+      const allCourses = await api.getCoreSpecializationCourses(user.student_id);
+      return Array.isArray(allCourses) 
+        ? allCourses.filter(course => course.specialization === 'Environmental' || 
+                                     course.course_name?.includes('Environmental'))
+        : [];
+    },
+    'Sustainability': async () => {
+      const allCourses = await api.getCoreSpecializationCourses(user.student_id);
+      return Array.isArray(allCourses) 
+        ? allCourses.filter(course => course.specialization === 'Sustainability' || 
+                                     course.course_name?.includes('Sustainability'))
+        : [];
+    },
+    'Renewable Energy': async () => {
+      const allCourses = await api.getCoreSpecializationCourses(user.student_id);
+      return Array.isArray(allCourses) 
+        ? allCourses.filter(course => course.specialization === 'Renewable Energy' || 
+                                     course.course_name?.includes('Renewable'))
+        : [];
+    },
+    
+    // Fallback
+    'core': () => api.getCourses(), // Default for General Pathway
+    'spec': () => api.getCoreSpecializationCourses(user.student_id), // Default for Core Specialisation
+  };
+
+  const fetchFunction = fetchMap[tabName] || (() => api.getCourses());
+  
+  try {
+    const data = await fetchFunction();
+    const rawList = Array.isArray(data) ? data : (data.courses || []);
+    const grouped = rawList.reduce((acc, course) => {
+      const sem = course.course_semester || 'Other';
+      if (!acc[sem]) acc[sem] = [];
+      acc[sem].push(course);
+      return acc;
+    }, {});
+    
+    setCurriculumPool(grouped);
+    setExpandedSem(null);
+  } catch (err) { 
+    console.error(err); 
+    setCurriculumPool({});
+  }
+}, [user?.student_id]);
 
   useEffect(() => { 
     fetchSemesterCredits(); 
@@ -254,9 +289,10 @@ function StudyPlan({ user }) {
     fetchUserPlan();
   }, [fetchSemesterCredits, fetchCourseCredits, fetchUserPlan]);
 
-  useEffect(() => { 
-    if (view === 'add') fetchPool(activeTab); 
-  }, [activeTab, view, fetchPool]);
+useEffect(() => { 
+  if (view === 'add') fetchPool(activeSubTab); 
+}, [activeSubTab, view, fetchPool]);
+
 
   const resetForm = () => {
     setCurrentSelection([]);
@@ -441,40 +477,51 @@ function StudyPlan({ user }) {
                 <input type="text" placeholder="Search..." className="search-input" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
               
-              <div className="course-type-toggle-group">
-                {['Core Discipline', 'Core Specialise', 'All Courses'].map(tab => (
-                  <button 
-                    key={tab} 
-                    onClick={() => setActiveTab(tab)} 
-                    className="course-type-tab"
-                    style={{
-                      background: (activeTab === tab || (tab === 'Core Discipline' && ['NR', 'UR', 'CC', 'CD'].includes(activeTab))) ? 'rgba(129, 199, 132, 0.3)' : 'transparent', 
-                      color: (activeTab === tab || (tab === 'Core Discipline' && ['NR', 'UR', 'CC', 'CD'].includes(activeTab))) ? '#fff' : '#aaa',
-                    }}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
+{/* Main tabs */}
+<div className="course-type-toggle-group">
+  <button 
+    className={`course-type-tab ${activeMainTab === 'core' ? 'active' : ''}`}
+    onClick={() => setActiveMainTab('core')}
+  >
+    General Pathway
+  </button>
+  <button 
+    className={`course-type-tab ${activeMainTab === 'spec' ? 'active' : ''}`}
+    onClick={() => setActiveMainTab('spec')}
+  >
+    Core Specialisation
+  </button>
+</div>
 
-              {(activeTab === 'Core Discipline' || ['NR', 'UR', 'CC', 'CD'].includes(activeTab)) && (
-                <div className="sub-tabs" style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
-                  {['NR', 'UR', 'CC', 'CD'].map(sub => (
-                    <button 
-                      key={sub} 
-                      onClick={() => setActiveTab(sub)}
-                      className="sub-tab"
-                      style={{
-                        flex: 1, padding: '8px', border: 'none', borderRadius: '5px', cursor: 'pointer',
-                        background: activeTab === sub ? '#81c784' : 'rgba(255,255,255,0.05)',
-                        color: activeTab === sub ? '#000' : '#81c784',
-                      }}
-                    >
-                      {sub}
-                    </button>
-                  ))}
-                </div>
-              )}
+{/* Sub-tabs */}
+{activeMainTab === 'core' && (
+  <div className="sub-tabs">
+    {['All','NR','UR','CC','CD'].map(sub => (
+      <button 
+        key={sub}
+        className={`sub-tab ${activeSubTab === sub ? 'active' : ''}`}
+        onClick={() => setActiveSubTab(sub)}
+      >
+        {sub}
+      </button>
+    ))}
+  </div>
+)}
+
+{activeMainTab === 'spec' && (
+  <div className="sub-tabs">
+    {['Offshore','Environmental','Sustainability','Renewable Energy'].map(sub => (
+      <button 
+        key={sub}
+        className={`sub-tab ${activeSubTab === sub ? 'active' : ''}`}
+        onClick={() => setActiveSubTab(sub)}
+      >
+        {sub}
+      </button>
+    ))}
+  </div>
+)}
+
               
               <div className="pool-list-fixed">
                 {Object.keys(curriculumPool).length > 0 ? (

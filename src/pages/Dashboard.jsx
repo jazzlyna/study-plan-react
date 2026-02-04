@@ -46,7 +46,7 @@ function Dashboard({ user }) {
         <h2 className="dashboard-title">
           {greeting}, {user.student_name || "Student"}
         </h2>
-        <p style={{ color: "rgba(255,255,255,0.5)", marginTop: "-10px" }}>
+        <p style={{ color: "rgba(255,255,255,0.5)", marginTop: "10px" }}>
           Academic Overview
         </p>
       </div>
