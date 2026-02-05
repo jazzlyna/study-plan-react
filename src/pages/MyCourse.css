@@ -1,0 +1,153 @@
+.top-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tab.active {
+  background: white;
+  color: black;
+}
+
+.sub-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sub-tab {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: transparent;
+  color: white;
+  cursor: pointer;
+}
+
+.sub-tab.active {
+  background: #81c784;
+  color: black;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.search-box input {
+  background: none;
+  border: none;
+  color: white;
+  outline: none;
+}
+
+.pool-card {
+  padding: 16px;
+}
+
+.semester-header-label {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  color: white;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.semester-header-label.clickable {
+  cursor: pointer;
+}
+
+.semester-courses {
+  padding-left: 8px;
+  margin-bottom: 10px;
+}
+
+.draggable-item {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.draggable-item:hover {
+  background: rgba(255,255,255,0.1);
+  transform: translateY(-1px);
+}
+
+.course-code {
+  font-weight: bold;
+  color: #9ad59d;
+}
+
+.course-name {
+  font-size: 13px;
+  color: white;
+}
+
+.course-meta {
+  font-size: 11px;
+  color: #ffcc80;
+  margin-top: 4px;
+}
+
+.detail-card {
+  padding: 32px;
+  border-left: 4px solid #81c784;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.credit-circle {
+  width: 56px;
+  height: 56px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.empty-state {
+  text-align: center;
+  color: #aaa;
+  padding: 20px;
+}

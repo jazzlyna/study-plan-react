@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   FaPlus, FaTrash, FaChevronLeft, FaSearch, 
@@ -15,8 +16,8 @@ function StudyPlan({ user }) {
   const [selectedSem, setSelectedSem] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-const [activeMainTab, setActiveMainTab] = useState('core'); // 'core' or 'spec'
-const [activeSubTab, setActiveSubTab] = useState('All');   // 'All', 'NR', 'UR', etc.
+  const [activeMainTab, setActiveMainTab] = useState('core'); // 'core' or 'spec'
+  const [activeSubTab, setActiveSubTab] = useState('All');   // 'All', 'NR', 'UR', etc.
   const [curriculumPool, setCurriculumPool] = useState([]);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [semesterCredits, setSemesterCredits] = useState({});
@@ -35,6 +36,30 @@ const [activeSubTab, setActiveSubTab] = useState('All');   // 'All', 'NR', 'UR',
     return ignore.includes(String(val).trim().toLowerCase()) ? null : String(val).trim();
   };
 
+  // NEW: Smart function to get max credits based on actual completed semesters
+  const getMaxCreditsForSemester = (targetSemesterNumber) => {
+    // If no semesters exist yet, default to 15 credits
+    if (savedSemesters.length === 0) {
+      return 15;
+    }
+
+    // Find the previous semester (targetSemesterNumber - 1)
+    const prevSemNumber = targetSemesterNumber - 1;
+    const prevSemester = savedSemesters.find(s => s.number === prevSemNumber);
+
+    // If previous semester doesn't exist OR is not "Complete", use default 15
+    if (!prevSemester || prevSemester.status !== 'Complete') {
+      return 15;
+    }
+
+    // Only check GPA if previous semester is COMPLETED
+    // Parse GPA as float (handle "0.00" string)
+    const prevGPA = parseFloat(prevSemester.gpa) || 0;
+    
+    // GPA < 2.0 → 11 credits, otherwise 15 credits
+    return prevGPA < 2.0 ? 11 : 15;
+  };
+
   const handleAddCourse = (course) => {
     if (currentSelection.some(c => c.course_code === course.course_code)) {
       alert(`You have already added [${course.course_code}] to this semester.`);
@@ -50,8 +75,6 @@ const [activeSubTab, setActiveSubTab] = useState('All');   // 'All', 'NR', 'UR',
         existingSemNumber = sem.number;
       }
     });
-
-
 
     if (existingRecord) {
       if (!existingRecord.grade || existingRecord.grade.trim() === "") {
@@ -72,28 +95,41 @@ const [activeSubTab, setActiveSubTab] = useState('All');   // 'All', 'NR', 'UR',
     setCurrentSelection([...currentSelection, { ...course, grade: "" }]);
   };
 
-    const handleSaveAnywayWithCreditLimit = async () => {
-  setCreditLimitError(null);
-  await handleSaveSemester(true);
-};
+  const handleSaveAnywayWithCreditLimit = async () => {
+    setCreditLimitError(null);
+    await handleSaveSemester(true);
+  };
 
-const handleSaveSemester = async (bypass = false) => {
-  // Ensure targetSemester is an Integer
-  const targetSemester = parseInt(isEditing ? selectedSem.number : savedSemesters.length + 1);
+  const handleSaveSemester = async (bypass = false) => {
+    // Ensure targetSemester is an Integer
+    const targetSemester = parseInt(isEditing ? selectedSem.number : savedSemesters.length + 1);
 
-  if (!bypass) {
-    let errorMsg = null;
-    
-    // NEW: Check credit limit FIRST
-    const currentCredits = calculateCurrentCredits();
-    const prevSemesterGPA = (savedSemesters.find(s => s.number === targetSemester - 1)?.gpa || 0);
-    const maxCredits = prevSemesterGPA < 2.0 ? 11 : 15;
-    
-    if (currentCredits > maxCredits) {
-      errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester. Students with GPA below 2.0 are limited to 11 credits, others can take up to 15 credits.`;
-      setCreditLimitError(errorMsg);
-      return;
-    }
+    if (!bypass) {
+      let errorMsg = null;
+      
+      // FIXED: Use smart credit limit check
+      const currentCredits = calculateCurrentCredits();
+      const maxCredits = getMaxCreditsForSemester(targetSemester);
+      
+      if (currentCredits > maxCredits) {
+        // Get previous semester info for better error message
+        const prevSemNumber = targetSemester - 1;
+        const prevSemester = savedSemesters.find(s => s.number === prevSemNumber);
+        
+        if (!prevSemester) {
+          errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester.`;
+        } else if (prevSemester.status !== 'Complete') {
+          errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester.`;
+        } else {
+          const prevGPA = parseFloat(prevSemester.gpa) || 0;
+          errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester. Students with GPA below 2.0 are limited to 11 credits, others can take up to 15 credits. (Previous semester GPA: ${prevGPA.toFixed(2)})`;
+        }
+        
+        setCreditLimitError(errorMsg);
+        return;
+      }
+
+      // Check prerequisites
       for (const course of currentSelection) {
         let prereqs = [];
         if (Array.isArray(course.pre_requisite)) {
@@ -237,70 +273,70 @@ const handleSaveSemester = async (bypass = false) => {
     }
   }, []);
 
-const fetchPool = useCallback(async (tabName) => {
-  const fetchMap = {
-    // General Pathway tabs
-    'All': () => api.getCourses(),
-    'NR': () => api.getNationalRequirementCourses(user.student_id),
-    'UR': () => api.getUniversityRequirementCourses(user.student_id),
-    'CC': () => api.getCommonCourses(user.student_id),
-    'CD': () => api.getCoreDisciplineCourses(user.student_id),
-    
-    // Core Specialisation tabs
-    'Offshore': async () => {
-      const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-      // Filter for Offshore specialization - you may need to adjust this based on your backend data structure
-      return Array.isArray(allCourses) 
-        ? allCourses.filter(course => course.specialization === 'Offshore' || 
-                                     course.course_name?.includes('Offshore'))
-        : [];
-    },
-    'Environmental': async () => {
-      const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-      return Array.isArray(allCourses) 
-        ? allCourses.filter(course => course.specialization === 'Environmental' || 
-                                     course.course_name?.includes('Environmental'))
-        : [];
-    },
-    'Sustainability': async () => {
-      const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-      return Array.isArray(allCourses) 
-        ? allCourses.filter(course => course.specialization === 'Sustainability' || 
-                                     course.course_name?.includes('Sustainability'))
-        : [];
-    },
-    'Renewable Energy': async () => {
-      const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-      return Array.isArray(allCourses) 
-        ? allCourses.filter(course => course.specialization === 'Renewable Energy' || 
-                                     course.course_name?.includes('Renewable'))
-        : [];
-    },
-    
-    // Fallback
-    'core': () => api.getCourses(), // Default for General Pathway
-    'spec': () => api.getCoreSpecializationCourses(user.student_id), // Default for Core Specialisation
-  };
+  const fetchPool = useCallback(async (tabName) => {
+    const fetchMap = {
+      // General Pathway tabs
+      'All': () => api.getCourses(),
+      'NR': () => api.getNationalRequirementCourses(user.student_id),
+      'UR': () => api.getUniversityRequirementCourses(user.student_id),
+      'CC': () => api.getCommonCourses(user.student_id),
+      'CD': () => api.getCoreDisciplineCourses(user.student_id),
+      
+      // Core Specialisation tabs
+      'Offshore': async () => {
+        const allCourses = await api.getCoreSpecializationCourses(user.student_id);
+        // Filter for Offshore specialization - you may need to adjust this based on your backend data structure
+        return Array.isArray(allCourses) 
+          ? allCourses.filter(course => course.specialization === 'Offshore' || 
+                                       course.course_name?.includes('Offshore'))
+          : [];
+      },
+      'Environmental': async () => {
+        const allCourses = await api.getCoreSpecializationCourses(user.student_id);
+        return Array.isArray(allCourses) 
+          ? allCourses.filter(course => course.specialization === 'Environmental' || 
+                                       course.course_name?.includes('Environmental'))
+          : [];
+      },
+      'Sustainability': async () => {
+        const allCourses = await api.getCoreSpecializationCourses(user.student_id);
+        return Array.isArray(allCourses) 
+          ? allCourses.filter(course => course.specialization === 'Sustainability' || 
+                                       course.course_name?.includes('Sustainability'))
+          : [];
+      },
+      'Renewable Energy': async () => {
+        const allCourses = await api.getCoreSpecializationCourses(user.student_id);
+        return Array.isArray(allCourses) 
+          ? allCourses.filter(course => course.specialization === 'Renewable Energy' || 
+                                       course.course_name?.includes('Renewable'))
+          : [];
+      },
+      
+      // Fallback
+      'core': () => api.getCourses(), // Default for General Pathway
+      'spec': () => api.getCoreSpecializationCourses(user.student_id), // Default for Core Specialisation
+    };
 
-  const fetchFunction = fetchMap[tabName] || (() => api.getCourses());
-  
-  try {
-    const data = await fetchFunction();
-    const rawList = Array.isArray(data) ? data : (data.courses || []);
-    const grouped = rawList.reduce((acc, course) => {
-      const sem = course.course_semester || 'Other';
-      if (!acc[sem]) acc[sem] = [];
-      acc[sem].push(course);
-      return acc;
-    }, {});
+    const fetchFunction = fetchMap[tabName] || (() => api.getCourses());
     
-    setCurriculumPool(grouped);
-    setExpandedSem(null);
-  } catch (err) { 
-    console.error(err); 
-    setCurriculumPool({});
-  }
-}, [user?.student_id]);
+    try {
+      const data = await fetchFunction();
+      const rawList = Array.isArray(data) ? data : (data.courses || []);
+      const grouped = rawList.reduce((acc, course) => {
+        const sem = course.course_semester || 'Other';
+        if (!acc[sem]) acc[sem] = [];
+        acc[sem].push(course);
+        return acc;
+      }, {});
+      
+      setCurriculumPool(grouped);
+      setExpandedSem(null);
+    } catch (err) { 
+      console.error(err); 
+      setCurriculumPool({});
+    }
+  }, [user?.student_id]);
 
   useEffect(() => { 
     fetchSemesterCredits(); 
@@ -308,10 +344,9 @@ const fetchPool = useCallback(async (tabName) => {
     fetchUserPlan();
   }, [fetchSemesterCredits, fetchCourseCredits, fetchUserPlan]);
 
-useEffect(() => { 
-  if (view === 'add') fetchPool(activeSubTab); 
-}, [activeSubTab, view, fetchPool]);
-
+  useEffect(() => { 
+    if (view === 'add') fetchPool(activeSubTab); 
+  }, [activeSubTab, view, fetchPool]);
 
   const resetForm = () => {
     setCurrentSelection([]);
@@ -321,7 +356,7 @@ useEffect(() => {
     setView('list');
     setSearchQuery('');
     setPendingError(null);
-      setCreditLimitError(null); 
+    setCreditLimitError(null); 
   };
 
   const calculateCurrentCredits = () => 
@@ -356,25 +391,24 @@ useEffect(() => {
         </div>
       )}
 
-
-{creditLimitError && (
-  <div className="modal-overlay">
-    <div className="glass-card modal-content">
-      <div className="modal-header">
-        <div className="error-title-row">
-          <FaExclamationTriangle color="#ff6b6b" size={24} />
-          <h3 style={{margin: 0, color: '#ff6b6b'}}>Credit Limit Warning</h3>
+      {creditLimitError && (
+        <div className="modal-overlay">
+          <div className="glass-card modal-content">
+            <div className="modal-header">
+              <div className="error-title-row">
+                <FaExclamationTriangle color="#ff6b6b" size={24} />
+                <h3 style={{margin: 0, color: '#ff6b6b'}}>Credit Limit Warning</h3>
+              </div>
+              <FaTimes className="close-icon" onClick={() => setCreditLimitError(null)} />
+            </div>
+            <p className="modal-body-text">{creditLimitError}</p>
+            <div className="modal-footer">
+              <button className="modal-cancel-btn" onClick={() => setCreditLimitError(null)}>Cancel & Fix</button>
+              <button className="modal-save-anyway-btn" onClick={handleSaveAnywayWithCreditLimit}>Save Anyway</button>
+            </div>
+          </div>
         </div>
-        <FaTimes className="close-icon" onClick={() => setCreditLimitError(null)} />
-      </div>
-      <p className="modal-body-text">{creditLimitError}</p>
-      <div className="modal-footer">
-        <button className="modal-cancel-btn" onClick={() => setCreditLimitError(null)}>Cancel & Fix</button>
-        <button className="modal-save-anyway-btn" onClick={handleSaveAnywayWithCreditLimit}>Save Anyway</button>
-      </div>
-    </div>
-  </div>
-)}
+      )}
       
       <div className="dashboard-content">
         <div className="header-row">
@@ -416,48 +450,53 @@ useEffect(() => {
           </div>
         )}
 
-{view === 'view' && selectedSem && (
-  <div className="glass-card view-card">
-    <div className="view-header">
-      <button className="back-btn" onClick={() => setView('list')}><FaChevronLeft /> Back</button>
-      <div className="action-btns">
-        <button className="edit-btn" onClick={() => { setCurrentSelection(selectedSem.courses); setSemStatus(selectedSem.status); setIsEditing(true); setView('add'); }}><FaEdit /> Edit</button>
-        <button className="delete-btn" onClick={async () => { if(window.confirm(`Delete Semester ${selectedSem.number}?`)) { await api.deleteSemester(user.student_id, selectedSem.number); setSavedSemesters(prev => prev.filter(sem => sem.number !== selectedSem.number)); await fetchSemesterCredits(); await fetchUserPlan(); resetForm(); } }}><FaTrash /> Delete</button>
-      </div>
-    </div>
-    
-    {/* NEW: Credit warning display */}
-    {(() => {
-      const semCredits = semesterCredits[selectedSem.number] || 0;
-      const prevSemNumber = selectedSem.number - 1;
-      const prevSemesterGPA = savedSemesters.find(s => s.number === prevSemNumber)?.gpa || 0;
-      const maxCredits = prevSemesterGPA < 2.0 ? 11 : 15;
-      
-      if (semCredits > maxCredits) {
-        return (
-          <div style={{
-            backgroundColor: 'rgba(255, 107, 107, 0.1)',
-            border: '1px solid rgba(255, 107, 107, 0.3)',
-            borderRadius: '8px',
-            padding: '15px',
-            marginBottom: '20px',
-            color: '#ff6b6b'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <FaExclamationTriangle />
-              <strong>Credit Limit Exceeded</strong>
+        {view === 'view' && selectedSem && (
+          <div className="glass-card view-card">
+            <div className="view-header">
+              <button className="back-btn" onClick={() => setView('list')}><FaChevronLeft /> Back</button>
+              <div className="action-btns">
+                <button className="edit-btn" onClick={() => { setCurrentSelection(selectedSem.courses); setSemStatus(selectedSem.status); setIsEditing(true); setView('add'); }}><FaEdit /> Edit</button>
+                <button className="delete-btn" onClick={async () => { if(window.confirm(`Delete Semester ${selectedSem.number}?`)) { await api.deleteSemester(user.student_id, selectedSem.number); setSavedSemesters(prev => prev.filter(sem => sem.number !== selectedSem.number)); await fetchSemesterCredits(); await fetchUserPlan(); resetForm(); } }}><FaTrash /> Delete</button>
+              </div>
             </div>
-            <div style={{ fontSize: '14px' }}>
-              This semester has {semCredits} credits, exceeding the maximum allowed of {maxCredits} credits.
-              {prevSemesterGPA < 2.0 ? ' (Previous semester GPA < 2.0)' : ' (Previous semester GPA ≥ 2.0)'}
-            </div>
-          </div>
-        );
-      }
-      return null;
-    })()}
-    
-    <div className="semester-header">
+            
+            {/* FIXED: Credit warning display - only check COMPLETED semesters */}
+            {(() => {
+              const semCredits = semesterCredits[selectedSem.number] || 0;
+              const prevSemNumber = selectedSem.number - 1;
+              const prevSemester = savedSemesters.find(s => s.number === prevSemNumber);
+              
+              // Only check if previous semester exists AND is Complete
+              if (prevSemester && prevSemester.status === 'Complete') {
+                const prevGPA = parseFloat(prevSemester.gpa) || 0;
+                const maxCredits = prevGPA < 2.0 ? 11 : 15;
+                
+                if (semCredits > maxCredits) {
+                  return (
+                    <div style={{
+                      backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                      border: '1px solid rgba(255, 107, 107, 0.3)',
+                      borderRadius: '8px',
+                      padding: '15px',
+                      marginBottom: '20px',
+                      color: '#ff6b6b'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                        <FaExclamationTriangle />
+                        <strong>Credit Limit Exceeded</strong>
+                      </div>
+                      <div style={{ fontSize: '14px' }}>
+                        This semester has {semCredits} credits, exceeding the maximum allowed of {maxCredits} credits.
+                        {prevGPA < 2.0 ? ` (Previous semester GPA: ${prevGPA.toFixed(2)} < 2.0)` : ` (Previous semester GPA: ${prevGPA.toFixed(2)} ≥ 2.0)`}
+                      </div>
+                    </div>
+                  );
+                }
+              }
+              return null;
+            })()}
+            
+            <div className="semester-header">
               <div className="semester-info">
                 <h3 className="view-sem-title">Semester {selectedSem.number} Details</h3>
                 <div className="status-badge">{selectedSem.status}</div>
@@ -499,27 +538,28 @@ useEffect(() => {
                       <button key={s} type="button" onClick={() => setSemStatus(s)} className="status-tab" style={{ background: semStatus === s ? '#81c784' : 'transparent', color: semStatus === s ? '#000' : '#888' }}>{s}</button>
                     ))}
                   </div>
-<div className="credit-counter" style={{ 
-  borderColor: calculateCurrentCredits() > ((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15) ? '#ff6b6b' : 'rgba(255,255,255,0.1)', 
-  backgroundColor: calculateCurrentCredits() > ((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15) ? 'rgba(255, 107, 107, 0.1)' : 'transparent' 
-}}>
-  <span style={{ 
-    color: calculateCurrentCredits() > ((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15) ? '#ff6b6b' : '#81c784', 
-    fontWeight: 'bold' 
-  }}>
-    {calculateCurrentCredits()}
-  </span>/{((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15)} Max
-  {calculateCurrentCredits() > ((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15) && (
-    <div style={{ 
-      fontSize: '10px', 
-      color: '#ff6b6b', 
-      marginTop: '5px',
-      fontWeight: 'normal'
-    }}>
-      Exceeds limit!
-    </div>
-  )}
-</div>
+                  {/* FIXED: Use smart credit limit calculation */}
+                  <div className="credit-counter" style={{ 
+                    borderColor: calculateCurrentCredits() > getMaxCreditsForSemester(isEditing ? selectedSem?.number : savedSemesters.length + 1) ? '#ff6b6b' : 'rgba(255,255,255,0.1)', 
+                    backgroundColor: calculateCurrentCredits() > getMaxCreditsForSemester(isEditing ? selectedSem?.number : savedSemesters.length + 1) ? 'rgba(255, 107, 107, 0.1)' : 'transparent' 
+                  }}>
+                    <span style={{ 
+                      color: calculateCurrentCredits() > getMaxCreditsForSemester(isEditing ? selectedSem?.number : savedSemesters.length + 1) ? '#ff6b6b' : '#81c784', 
+                      fontWeight: 'bold' 
+                    }}>
+                      {calculateCurrentCredits()}
+                    </span>/{getMaxCreditsForSemester(isEditing ? selectedSem?.number : savedSemesters.length + 1)} Max
+                    {calculateCurrentCredits() > getMaxCreditsForSemester(isEditing ? selectedSem?.number : savedSemesters.length + 1) && (
+                      <div style={{ 
+                        fontSize: '10px', 
+                        color: '#ff6b6b', 
+                        marginTop: '5px',
+                        fontWeight: 'normal'
+                      }}>
+                        Exceeds limit!
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="selection-list">
@@ -567,51 +607,50 @@ useEffect(() => {
                 <input type="text" placeholder="Search..." className="search-input" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
               
-{/* Main tabs */}
-<div className="course-type-toggle-group">
-  <button 
-    className={`course-type-tab ${activeMainTab === 'core' ? 'active' : ''}`}
-    onClick={() => setActiveMainTab('core')}
-  >
-    General Pathway
-  </button>
-  <button 
-    className={`course-type-tab ${activeMainTab === 'spec' ? 'active' : ''}`}
-    onClick={() => setActiveMainTab('spec')}
-  >
-    Core Specialisation
-  </button>
-</div>
+              {/* Main tabs */}
+              <div className="course-type-toggle-group">
+                <button 
+                  className={`course-type-tab ${activeMainTab === 'core' ? 'active' : ''}`}
+                  onClick={() => setActiveMainTab('core')}
+                >
+                  General Pathway
+                </button>
+                <button 
+                  className={`course-type-tab ${activeMainTab === 'spec' ? 'active' : ''}`}
+                  onClick={() => setActiveMainTab('spec')}
+                >
+                  Core Specialisation
+                </button>
+              </div>
+              
+              {/* Sub-tabs */}
+              {activeMainTab === 'core' && (
+                <div className="sub-tabs">
+                  {['All','NR','UR','CC','CD'].map(sub => (
+                    <button 
+                      key={sub}
+                      className={`sub-tab ${activeSubTab === sub ? 'active' : ''}`}
+                      onClick={() => setActiveSubTab(sub)}
+                    >
+                      {sub}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-{/* Sub-tabs */}
-{activeMainTab === 'core' && (
-  <div className="sub-tabs">
-    {['All','NR','UR','CC','CD'].map(sub => (
-      <button 
-        key={sub}
-        className={`sub-tab ${activeSubTab === sub ? 'active' : ''}`}
-        onClick={() => setActiveSubTab(sub)}
-      >
-        {sub}
-      </button>
-    ))}
-  </div>
-)}
-
-{activeMainTab === 'spec' && (
-  <div className="sub-tabs">
-    {['Offshore','Environmental','Sustainability','Renewable Energy'].map(sub => (
-      <button 
-        key={sub}
-        className={`sub-tab ${activeSubTab === sub ? 'active' : ''}`}
-        onClick={() => setActiveSubTab(sub)}
-      >
-        {sub}
-      </button>
-    ))}
-  </div>
-)}
-
+              {activeMainTab === 'spec' && (
+                <div className="sub-tabs">
+                  {['Offshore','Environmental','Sustainability','Renewable Energy'].map(sub => (
+                    <button 
+                      key={sub}
+                      className={`sub-tab ${activeSubTab === sub ? 'active' : ''}`}
+                      onClick={() => setActiveSubTab(sub)}
+                    >
+                      {sub}
+                    </button>
+                  ))}
+                </div>
+              )}
               
               <div className="pool-list-fixed">
                 {Object.keys(curriculumPool).length > 0 ? (
