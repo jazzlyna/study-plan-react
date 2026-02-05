@@ -4,7 +4,7 @@ import { api } from "../utils/api";
 import defaultAvatar from "../image/default_avatar.jpg";
 import './Profile.css';
 
-function Profile({ user, setUser }) {
+function Profile({ user }) {
   const fileInputRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -66,8 +66,8 @@ function Profile({ user, setUser }) {
         intake_session: cleanDate(formData.intake_session)
       };
 
-      const updatedUser = await api.updateProfile(user.student_id, updatePayload);
-      setUser(updatedUser);
+      // Only update the profile, don't try to update global user state
+      await api.updateProfile(user.student_id, updatePayload);
       setIsEditing(false);
       alert("Profile updated successfully!");
     } catch (error) {

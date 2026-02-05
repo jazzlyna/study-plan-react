@@ -1,62 +1,66 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { api } from "../utils/api"; // Centralized API
-import "./SignUpLogin.css"; // External CSS
-function Login({ setUser }) { 
-  const [student_email, setStudent_email] = useState("");
-  const [student_password, setStudent_password] = useState("");
-  const [message, setMessage] = useState("");
+import { api } from "../utils/api"; 
+import "./SignUpLogin.css"; 
+
+function Login() { 
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
+  const [message, setMessage] = useState("");
+
+  const handleGoogleAuth = async (actionType) => {
     try {
-      // Use the utility we built earlier
-      const data = await api.login(student_email, student_password);
-      // SUCCESS: data is already parsed by our fetchAPI wrapper
-      setUser(data.user || data); 
-      navigate("/Dashboard");
+      setLoading(true);
+      setMessage("");
+      // Supabase automatically detects if the user is new or returning
+      await api.loginWithGoogle(); 
     } catch (err) {
-      // Use the error message thrown by our wrapper
-      setMessage(err.message || "Invalid credentials");
-    } finally {
+      setMessage(`Google ${actionType} failed: ${err.message}`);
       setLoading(false);
     }
   };
+
   return (
     <div className="login-viewport">
       <div className="soft-glass-card">
-        <h2 className="soft-title">SIGN IN</h2>
+        <h2 className="soft-title">STUDY PLAN</h2>
+        <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '2rem' }}>
+          One account. All your courses.
+        </p>
         
-        <form onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="Email Address"
-            className="pill-input"
-            value={student_email}
-            onChange={(e) => setStudent_email(e.target.value)}
-            required
+        {/* Primary Action: SIGN IN */}
+        <button 
+          className="soft-primary-btn" 
+          onClick={() => handleGoogleAuth('Login')} 
+          disabled={loading}
+          style={{ marginBottom: '1rem' }}
+        >
+          {loading ? "Connecting..." : "Log In with Google"}
+        </button>
+
+        <div className="divider" style={{ margin: '1.5rem 0' }}>OR</div>
+
+        {/* Secondary Action: SIGN UP */}
+        <button 
+          className="soft-google-btn" 
+          onClick={() => handleGoogleAuth('Sign Up')} 
+          disabled={loading}
+          style={{ border: '1px solid rgba(255,255,255,0.3)' }}
+        >
+          <img 
+            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+            alt="G" 
+            style={{ width: '18px', marginRight: '10px' }} 
           />
-          <input
-            type="password"
-            placeholder="Password"
-            className="pill-input"
-            value={student_password}
-            onChange={(e) => setStudent_password(e.target.value)}
-            required
-          />
-          <button type="submit" className="soft-primary-btn" disabled={loading}>
-            {loading ? "Verifying..." : "Login"}
-          </button>
-        </form>
+          Create Account with Google
+        </button>
+
         {message && <div className="error-msg">{message}</div>}
-        <div className="switch-text">
-          New here? <span className="link-text" onClick={() => navigate("/signup")}>Create Account</span>
-        </div>
+
+        <p style={{ marginTop: '2rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
+          By continuing, you agree to the university terms of service.
+        </p>
       </div>
     </div>
   );
 }
+
 export default Login;

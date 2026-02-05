@@ -25,6 +25,7 @@ const [activeSubTab, setActiveSubTab] = useState('All');   // 'All', 'NR', 'UR',
   const [pendingError, setPendingError] = useState(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [expandedSem, setExpandedSem] = useState(null);
+  const [creditLimitError, setCreditLimitError] = useState(null);
 
   const gradeOptions = ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"];
 
@@ -50,6 +51,8 @@ const [activeSubTab, setActiveSubTab] = useState('All');   // 'All', 'NR', 'UR',
       }
     });
 
+
+
     if (existingRecord) {
       if (!existingRecord.grade || existingRecord.grade.trim() === "") {
         alert(`You have already added [${course.course_code}] in Semester ${existingSemNumber}.`);
@@ -69,12 +72,28 @@ const [activeSubTab, setActiveSubTab] = useState('All');   // 'All', 'NR', 'UR',
     setCurrentSelection([...currentSelection, { ...course, grade: "" }]);
   };
 
-  const handleSaveSemester = async (bypass = false) => {
-    // Ensure targetSemester is an Integer
-    const targetSemester = parseInt(isEditing ? selectedSem.number : savedSemesters.length + 1);
+    const handleSaveAnywayWithCreditLimit = async () => {
+  setCreditLimitError(null);
+  await handleSaveSemester(true);
+};
 
-    if (!bypass) {
-      let errorMsg = null;
+const handleSaveSemester = async (bypass = false) => {
+  // Ensure targetSemester is an Integer
+  const targetSemester = parseInt(isEditing ? selectedSem.number : savedSemesters.length + 1);
+
+  if (!bypass) {
+    let errorMsg = null;
+    
+    // NEW: Check credit limit FIRST
+    const currentCredits = calculateCurrentCredits();
+    const prevSemesterGPA = (savedSemesters.find(s => s.number === targetSemester - 1)?.gpa || 0);
+    const maxCredits = prevSemesterGPA < 2.0 ? 11 : 15;
+    
+    if (currentCredits > maxCredits) {
+      errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester. Students with GPA below 2.0 are limited to 11 credits, others can take up to 15 credits.`;
+      setCreditLimitError(errorMsg);
+      return;
+    }
       for (const course of currentSelection) {
         let prereqs = [];
         if (Array.isArray(course.pre_requisite)) {
@@ -302,6 +321,7 @@ useEffect(() => {
     setView('list');
     setSearchQuery('');
     setPendingError(null);
+      setCreditLimitError(null); 
   };
 
   const calculateCurrentCredits = () => 
@@ -336,6 +356,26 @@ useEffect(() => {
         </div>
       )}
 
+
+{creditLimitError && (
+  <div className="modal-overlay">
+    <div className="glass-card modal-content">
+      <div className="modal-header">
+        <div className="error-title-row">
+          <FaExclamationTriangle color="#ff6b6b" size={24} />
+          <h3 style={{margin: 0, color: '#ff6b6b'}}>Credit Limit Warning</h3>
+        </div>
+        <FaTimes className="close-icon" onClick={() => setCreditLimitError(null)} />
+      </div>
+      <p className="modal-body-text">{creditLimitError}</p>
+      <div className="modal-footer">
+        <button className="modal-cancel-btn" onClick={() => setCreditLimitError(null)}>Cancel & Fix</button>
+        <button className="modal-save-anyway-btn" onClick={handleSaveAnywayWithCreditLimit}>Save Anyway</button>
+      </div>
+    </div>
+  </div>
+)}
+      
       <div className="dashboard-content">
         <div className="header-row">
           <h2 className="dashboard-title">Academic Study Plan</h2>
@@ -376,16 +416,48 @@ useEffect(() => {
           </div>
         )}
 
-        {view === 'view' && selectedSem && (
-          <div className="glass-card view-card">
-            <div className="view-header">
-              <button className="back-btn" onClick={() => setView('list')}><FaChevronLeft /> Back</button>
-              <div className="action-btns">
-                <button className="edit-btn" onClick={() => { setCurrentSelection(selectedSem.courses); setSemStatus(selectedSem.status); setIsEditing(true); setView('add'); }}><FaEdit /> Edit</button>
-                <button className="delete-btn" onClick={async () => { if(window.confirm(`Delete Semester ${selectedSem.number}?`)) { await api.deleteSemester(user.student_id, selectedSem.number); setSavedSemesters(prev => prev.filter(sem => sem.number !== selectedSem.number)); await fetchSemesterCredits(); await fetchUserPlan(); resetForm(); } }}><FaTrash /> Delete</button>
-              </div>
+{view === 'view' && selectedSem && (
+  <div className="glass-card view-card">
+    <div className="view-header">
+      <button className="back-btn" onClick={() => setView('list')}><FaChevronLeft /> Back</button>
+      <div className="action-btns">
+        <button className="edit-btn" onClick={() => { setCurrentSelection(selectedSem.courses); setSemStatus(selectedSem.status); setIsEditing(true); setView('add'); }}><FaEdit /> Edit</button>
+        <button className="delete-btn" onClick={async () => { if(window.confirm(`Delete Semester ${selectedSem.number}?`)) { await api.deleteSemester(user.student_id, selectedSem.number); setSavedSemesters(prev => prev.filter(sem => sem.number !== selectedSem.number)); await fetchSemesterCredits(); await fetchUserPlan(); resetForm(); } }}><FaTrash /> Delete</button>
+      </div>
+    </div>
+    
+    {/* NEW: Credit warning display */}
+    {(() => {
+      const semCredits = semesterCredits[selectedSem.number] || 0;
+      const prevSemNumber = selectedSem.number - 1;
+      const prevSemesterGPA = savedSemesters.find(s => s.number === prevSemNumber)?.gpa || 0;
+      const maxCredits = prevSemesterGPA < 2.0 ? 11 : 15;
+      
+      if (semCredits > maxCredits) {
+        return (
+          <div style={{
+            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+            border: '1px solid rgba(255, 107, 107, 0.3)',
+            borderRadius: '8px',
+            padding: '15px',
+            marginBottom: '20px',
+            color: '#ff6b6b'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <FaExclamationTriangle />
+              <strong>Credit Limit Exceeded</strong>
             </div>
-            <div className="semester-header">
+            <div style={{ fontSize: '14px' }}>
+              This semester has {semCredits} credits, exceeding the maximum allowed of {maxCredits} credits.
+              {prevSemesterGPA < 2.0 ? ' (Previous semester GPA < 2.0)' : ' (Previous semester GPA ≥ 2.0)'}
+            </div>
+          </div>
+        );
+      }
+      return null;
+    })()}
+    
+    <div className="semester-header">
               <div className="semester-info">
                 <h3 className="view-sem-title">Semester {selectedSem.number} Details</h3>
                 <div className="status-badge">{selectedSem.status}</div>
@@ -427,9 +499,27 @@ useEffect(() => {
                       <button key={s} type="button" onClick={() => setSemStatus(s)} className="status-tab" style={{ background: semStatus === s ? '#81c784' : 'transparent', color: semStatus === s ? '#000' : '#888' }}>{s}</button>
                     ))}
                   </div>
-                  <div className="credit-counter" style={{ borderColor: calculateCurrentCredits() > ((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15) ? '#ff6b6b' : 'rgba(255,255,255,0.1)', backgroundColor: calculateCurrentCredits() > ((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15) ? 'rgba(255, 107, 107, 0.1)' : 'transparent' }}>
-                    <span style={{ color: calculateCurrentCredits() > ((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15) ? '#ff6b6b' : '#81c784', fontWeight: 'bold' }}>{calculateCurrentCredits()}</span>/{((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15)} Max
-                  </div>
+<div className="credit-counter" style={{ 
+  borderColor: calculateCurrentCredits() > ((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15) ? '#ff6b6b' : 'rgba(255,255,255,0.1)', 
+  backgroundColor: calculateCurrentCredits() > ((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15) ? 'rgba(255, 107, 107, 0.1)' : 'transparent' 
+}}>
+  <span style={{ 
+    color: calculateCurrentCredits() > ((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15) ? '#ff6b6b' : '#81c784', 
+    fontWeight: 'bold' 
+  }}>
+    {calculateCurrentCredits()}
+  </span>/{((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15)} Max
+  {calculateCurrentCredits() > ((savedSemesters.find(s => s.number === (isEditing ? selectedSem?.number : savedSemesters.length))?.gpa || 0) < 2.0 ? 11 : 15) && (
+    <div style={{ 
+      fontSize: '10px', 
+      color: '#ff6b6b', 
+      marginTop: '5px',
+      fontWeight: 'normal'
+    }}>
+      Exceeds limit!
+    </div>
+  )}
+</div>
                 </div>
               </div>
               <div className="selection-list">
