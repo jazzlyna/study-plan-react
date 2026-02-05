@@ -22,8 +22,8 @@ const StudyPlan = ({ student_id }) => {
   const [pendingError, setPendingError] = useState(null);
   const [creditLimitError, setCreditLimitError] = useState(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [semStatus, setSemStatus] = useState('Planned'); // Added from second code
-  const gradeOptions = ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"]; // Added from second code
+  const [semStatus, setSemStatus] = useState('Planned');
+  const gradeOptions = ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"];
 
   const getCleanPrereq = (prereq) => {
     if (!prereq || prereq === "none" || prereq === "-" || prereq === "---" || prereq === "undefined" || prereq === "n/a") return null;
@@ -31,13 +31,11 @@ const StudyPlan = ({ student_id }) => {
   };
 
   const handleAddCourse = (course) => {
-    // Check for duplicate in current selection
     if (currentSelection.some(c => c.course_code === course.course_code)) {
       alert(`You have already added [${course.course_code}] to this semester.`);
       return;
     }
     
-    // Check if course already exists in saved semesters
     let existingRecord = null;
     let existingSemNumber = null;
     savedSemesters.forEach(sem => {
@@ -48,7 +46,6 @@ const StudyPlan = ({ student_id }) => {
       }
     });
 
-    // Check if course already taken
     if (existingRecord) {
       if (!existingRecord.grade || existingRecord.grade.trim() === "") {
         alert(`You have already added [${course.course_code}] in Semester ${existingSemNumber}.`);
@@ -60,7 +57,6 @@ const StudyPlan = ({ student_id }) => {
       }
     }
     
-    // Check prerequisites
     const prereq = getCleanPrereq(course.pre_requisite);
     if (prereq) {
       alert(`Note: This course requires [${prereq.toUpperCase()}]. Please ensure the prerequisite is completed first!`);
@@ -69,40 +65,41 @@ const StudyPlan = ({ student_id }) => {
     setCurrentSelection([...currentSelection, { ...course, grade: "" }]);
   };
 
-  const handleSaveAnywayWithCreditLimit = async () => {
-    setCreditLimitError(null);
-    await handleSaveSemester(true);
+  const calculateCurrentCredits = () => {
+    return currentSelection.reduce((total, course) => 
+      total + (courseCreditsMap[course.course_code] || 3), 0);
   };
 
-  const handleSaveSemester = async (bypass = false) => {
-    if (!student_id) return;
-    setCreditLimitError(null);
-    setIsSaving(true);
-
-    // Calculate target semester
-    const targetSemester = isEditing ? selectedSem.number : savedSemesters.length + 1;
+  const getCreditLimitInfo = (semesterNumber) => {
+    const prevSemesterNumber = semesterNumber - 1;
+    const prevSemester = savedSemesters.find(sem => sem.number === prevSemesterNumber);
+    const prevSemesterGPA = prevSemester ? parseFloat(prevSemester.gpa) : 0;
+    const maxCredits = prevSemesterGPA < 2.0 ? 11 : 15;
+    const currentCredits = semesterCredits[semesterNumber] || 0;
     
-    // CREDIT LIMIT VALIDATION
-    if (!bypass) {
-      let errorMsg = null;
-      
-      // Calculate current credits
-      const currentCredits = calculateCurrentCredits();
-      
-      // Determine max credits based on previous semester GPA
-      const prevSemesterNumber = targetSemester - 1;
-      const prevSemester = savedSemesters.find(sem => sem.number === prevSemesterNumber);
-      const prevSemesterGPA = prevSemester ? parseFloat(prevSemester.gpa) : 0;
-      const maxCredits = prevSemesterGPA < 2.0 ? 11 : 15;
-      
-      if (currentCredits > maxCredits) {
-        errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester. Students with GPA below 2.0 are limited to 11 credits, others can take up to 15 credits.`;
-        setCreditLimitError(errorMsg);
-        setIsSaving(false);
-        return;
-      }
-      
-      // PREREQUISITE VALIDATION
+    return {
+      prevSemesterGPA,
+      maxCredits,
+      currentCredits,
+      exceedsLimit: currentCredits > maxCredits
+    };
+  };
+
+  const handleSaveAnywayWithCreditLimit = async () => {
+    // Close the modal
+    setCreditLimitError(null);
+    // Actually save the semester (bypass credit limit check)
+    await performSave(true);
+  };
+
+  const handleSaveSemester = async (bypassPrereq = false, bypassCredit = false) => {
+    if (!student_id) return;
+    
+    const targetSemester = isEditing ? selectedSem.number : savedSemesters.length + 1;
+    let errorMsg = null;
+    
+    // 1. CHECK PREREQUISITES
+    if (!bypassPrereq) {
       for (const course of currentSelection) {
         let prereqs = [];
         if (Array.isArray(course.pre_requisite)) {
@@ -132,10 +129,39 @@ const StudyPlan = ({ student_id }) => {
       
       if (errorMsg) {
         setPendingError(errorMsg);
-        setIsSaving(false);
         return;
       }
     }
+
+    // 2. CHECK CREDIT LIMIT (BUT DON'T BLOCK - JUST SHOW MODAL)
+    if (!bypassCredit) {
+      const prevSemesterNumber = targetSemester - 1;
+      const prevSemester = savedSemesters.find(sem => sem.number === prevSemesterNumber);
+      const prevSemesterGPA = prevSemester ? parseFloat(prevSemester.gpa) : 0;
+      const maxCredits = prevSemesterGPA < 2.0 ? 11 : 15;
+      const currentCredits = calculateCurrentCredits();
+      
+      if (currentCredits > maxCredits) {
+        // SHOW MODAL BUT DON'T BLOCK SAVE
+        const errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester. Students with GPA below 2.0 are limited to 11 credits, others can take up to 15 credits.`;
+        setCreditLimitError({
+          message: errorMsg,
+          targetSemester: targetSemester,
+          currentCredits: currentCredits,
+          maxCredits: maxCredits,
+          prevSemesterGPA: prevSemesterGPA
+        });
+        return; // Stop here, user will choose "Save Anyway" or "Cancel"
+      }
+    }
+
+    // 3. If no credit limit issue, just save
+    await performSave(bypassPrereq);
+  };
+
+  const performSave = async (bypassPrereq = false) => {
+    setIsSaving(true);
+    const targetSemester = isEditing ? selectedSem.number : savedSemesters.length + 1;
 
     try {
       // Delete existing semester if editing
@@ -154,20 +180,17 @@ const StudyPlan = ({ student_id }) => {
         });
       }
 
+      // Refresh data
       await fetchStudentPlan();
       await fetchSemesterCredits();
+      
       resetForm();
     } catch (error) {
-      // Handle backend errors (including credit limit errors from backend)
-      setCreditLimitError(error.message);
+      // Handle other backend errors
+      alert("Error saving semester: " + error.message);
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const calculateCurrentCredits = () => {
-    return currentSelection.reduce((total, course) => 
-      total + (courseCreditsMap[course.course_code] || 3), 0);
   };
 
   const generatePDFReport = async () => {
@@ -302,9 +325,28 @@ const StudyPlan = ({ student_id }) => {
     return map[grade?.charAt(0)] || '#888';
   };
 
+  const CreditWarningBanner = ({ semesterNumber }) => {
+    const creditInfo = getCreditLimitInfo(semesterNumber);
+    
+    if (!creditInfo.exceedsLimit) return null;
+    
+    return (
+      <div className="credit-warning-banner">
+        <AlertTriangle size={18} />
+        <div className="warning-content">
+          <strong>Credit Limit Exceeded</strong>
+          <span>
+            This semester has {creditInfo.currentCredits} credits, exceeding the maximum allowed of {creditInfo.maxCredits} credits.
+            {creditInfo.prevSemesterGPA < 2.0 ? ' (Previous semester GPA < 2.0)' : ' (Previous semester GPA ≥ 2.0)'}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="dashboard-wrapper">
-      {/* Credit Limit Error Modal */}
+      {/* Credit Limit Error Modal - POPS UP WHEN USER CLICKS SAVE */}
       {creditLimitError && (
         <div className="modal-overlay">
           <div className="class-modal-card-content">
@@ -315,10 +357,21 @@ const StudyPlan = ({ student_id }) => {
               </div>
               <X className="close-icon" onClick={() => setCreditLimitError(null)} />
             </div>
-            <div className="modal-body-text">{creditLimitError}</div>
+            <div className="modal-body-text">{creditLimitError.message}</div>
             <div className="modal-footer">
-              <button className="modal-cancel-btn" onClick={() => setCreditLimitError(null)}>Cancel & Fix</button>
-              <button className="modal-save-anyway-btn" onClick={handleSaveAnywayWithCreditLimit}>Save Anyway</button>
+              <button 
+                className="modal-cancel-btn" 
+                onClick={() => setCreditLimitError(null)}
+              >
+                Cancel & Fix
+              </button>
+              <button 
+                className="modal-save-anyway-btn" 
+                onClick={handleSaveAnywayWithCreditLimit}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Save Anyway'}
+              </button>
             </div>
           </div>
         </div>
@@ -338,7 +391,13 @@ const StudyPlan = ({ student_id }) => {
             <div className="modal-body-text">{pendingError}</div>
             <div className="modal-footer">
               <button className="modal-cancel-btn" onClick={() => setPendingError(null)}>Cancel & Fix</button>
-              <button className="modal-save-anyway-btn" onClick={() => handleSaveSemester(true)}>Save Anyway</button>
+              <button 
+                className="modal-save-anyway-btn" 
+                onClick={() => handleSaveSemester(true, false)} // Bypass prerequisite only
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Save Anyway'}
+              </button>
             </div>
           </div>
         </div>
@@ -358,23 +417,34 @@ const StudyPlan = ({ student_id }) => {
 
         {view === 'list' ? (
           <div className="sem-buttons-grid">
-            {savedSemesters.map((sem) => (
-              <button 
-                key={sem.number} 
-                className="sem-button"
-                onClick={() => { setSelectedSem(sem); setView('view'); }}
-              >
-                <div className="sem-card-header">
-                  <span className="sem-title">Semester {sem.number}</span>
-                  <span className="gpa-label">GPA: {sem.gpa}</span>
-                  <span className="credit-badge">Credits: {semesterCredits[sem.number] || 0}</span>
-                </div>
-                <div className="sem-card-footer">
-                  <span className="course-count">{sem.courses.length} Courses</span>
-                  <span className="status-label">{sem.status}</span>
-                </div>
-              </button>
-            ))}
+            {savedSemesters.map((sem) => {
+              const creditInfo = getCreditLimitInfo(sem.number);
+              return (
+                <button 
+                  key={sem.number} 
+                  className={`sem-button ${creditInfo.exceedsLimit ? 'credit-warning-card' : ''}`}
+                  onClick={() => { setSelectedSem(sem); setView('view'); }}
+                >
+                  <div className="sem-card-header">
+                    <span className="sem-title">Semester {sem.number}</span>
+                    <span className="gpa-label">GPA: {sem.gpa}</span>
+                    <span className={`credit-badge ${creditInfo.exceedsLimit ? 'credit-exceeded' : ''}`}>
+                      Credits: {semesterCredits[sem.number] || 0}
+                    </span>
+                  </div>
+                  <div className="sem-card-footer">
+                    <span className="course-count">{sem.courses.length} Courses</span>
+                    <span className="status-label">{sem.status}</span>
+                  </div>
+                  {creditInfo.exceedsLimit && (
+                    <div className="mini-warning">
+                      <AlertTriangle size={12} />
+                      <span>Credit limit exceeded</span>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
             <button className="sem-button add-button" onClick={() => { resetForm(); setView('add'); }}>
               <Plus className="plus-icon" />
               <span>Add Semester {savedSemesters.length + 1}</span>
@@ -383,9 +453,15 @@ const StudyPlan = ({ student_id }) => {
         ) : view === 'view' && selectedSem && (
           <div className="class-modal-card-content">
             <div className="modal-header">
-              <button className="back-btn" onClick={() => setView('list')}><ChevronDown style={{transform: 'rotate(90deg)'}} /> Back</button>
+              <button className="back-btn" onClick={() => setView('list')}>
+                <ChevronDown style={{transform: 'rotate(90deg)'}} /> Back
+              </button>
               <h3>Semester {selectedSem.number} Details</h3>
             </div>
+            
+            {/* Credit Warning Banner in Semester Detail View */}
+            <CreditWarningBanner semesterNumber={selectedSem.number} />
+            
             <table className="table-container">
               <thead>
                 <tr>
@@ -399,10 +475,19 @@ const StudyPlan = ({ student_id }) => {
                   <tr key={course.course_code}>
                     <td>{course.course_name} ({course.course_code})</td>
                     <td>{courseCreditsMap[course.course_code] || '-'}</td>
-                    <td style={{color: getGradeColor(course.grade)}}>{course.grade || 'Planned'}</td>
+                    <td style={{color: getGradeColor(course.grade)}}>
+                      {course.grade || (selectedSem.status === 'Complete' ? 'No grade' : 'Planned')}
+                    </td>
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr>
+                  <td><strong>Total Credits</strong></td>
+                  <td><strong>{semesterCredits[selectedSem.number] || 0}</strong></td>
+                  <td></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         )}
@@ -410,7 +495,9 @@ const StudyPlan = ({ student_id }) => {
         {view === 'add' && (
           <div className="builder-container">
             <div className="builder-header">
-              <h3>Create Semester {savedSemesters.length + 1}</h3>
+              <h3>
+                {isEditing ? `Editing Semester ${selectedSem?.number}` : `Create Semester ${savedSemesters.length + 1}`}
+              </h3>
               
               {/* Status Toggle */}
               <div className="status-toggle-group">
@@ -430,32 +517,36 @@ const StudyPlan = ({ student_id }) => {
                 ))}
               </div>
               
-              {/* Credit Counter */}
-              <div className="credit-counter">
-                <span>Credits: {calculateCurrentCredits()}</span>
-                {(() => {
-                  const targetSemester = isEditing ? selectedSem?.number : savedSemesters.length + 1;
-                  const prevSemesterNumber = targetSemester - 1;
-                  const prevSemester = savedSemesters.find(sem => sem.number === prevSemesterNumber);
-                  const prevSemesterGPA = prevSemester ? parseFloat(prevSemester.gpa) : 0;
-                  const maxCredits = prevSemesterGPA < 2.0 ? 11 : 15;
-                  
-                  return (
-                    <>
-                      <span>/ {maxCredits} Max</span>
-                      {calculateCurrentCredits() > maxCredits && (
-                        <div className="credit-warning">Exceeds limit!</div>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
+              {/* Credit Counter with Warning */}
+              {(() => {
+                const targetSemester = isEditing ? selectedSem?.number : savedSemesters.length + 1;
+                const creditInfo = getCreditLimitInfo(targetSemester);
+                const currentCredits = calculateCurrentCredits();
+                const exceeds = currentCredits > creditInfo.maxCredits;
+                
+                return (
+                  <div className={`credit-counter ${exceeds ? 'credit-exceeded' : ''}`}>
+                    <div className="credit-display">
+                      <span className={exceeds ? 'exceeded-text' : 'normal-text'}>
+                        {currentCredits}
+                      </span>
+                      <span> / {creditInfo.maxCredits} Max</span>
+                    </div>
+                    {exceeds && (
+                      <div className="credit-warning">
+                        <AlertTriangle size={12} />
+                        <span>Will exceed credit limit</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               
               <div className="builder-controls">
                 <button className="modal-cancel-btn" onClick={resetForm}>Cancel</button>
                 <button 
                   className="save-anyway-btn" 
-                  onClick={() => handleSaveSemester(false)} 
+                  onClick={() => handleSaveSemester(false, false)} // Check both prerequisites and credit limit
                   disabled={isSaving || currentSelection.length === 0}
                 >
                   {isSaving ? 'Saving...' : 'Save Semester'}
@@ -481,7 +572,10 @@ const StudyPlan = ({ student_id }) => {
                     <tbody>
                       {currentSelection.map((course, idx) => (
                         <tr key={idx}>
-                          <td>{course.course_name}</td>
+                          <td>
+                            <div className="course-code-bold">{course.course_code}</div>
+                            <div className="course-name-small">{course.course_name}</div>
+                          </td>
                           <td>{courseCreditsMap[course.course_code] || '-'}</td>
                           {semStatus === 'Complete' && (
                             <td>
@@ -494,7 +588,7 @@ const StudyPlan = ({ student_id }) => {
                                   setCurrentSelection(newSelection);
                                 }}
                               >
-                                <option value="">Planned</option>
+                                <option value="">Select grade</option>
                                 {gradeOptions.map(g => <option key={g} value={g}>{g}</option>)}
                               </select>
                             </td>
