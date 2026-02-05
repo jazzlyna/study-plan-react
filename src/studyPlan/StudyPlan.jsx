@@ -23,6 +23,7 @@ const StudyPlan = ({ student_id }) => {
   const [creditLimitError, setCreditLimitError] = useState(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [semStatus, setSemStatus] = useState('Planned');
+  const [backendError, setBackendError] = useState(null);
   const gradeOptions = ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"];
 
   const getCleanPrereq = (prereq) => {
@@ -89,7 +90,7 @@ const StudyPlan = ({ student_id }) => {
     // Close the modal
     setCreditLimitError(null);
     // Actually save the semester (bypass credit limit check)
-    await performSave(true);
+    await performSave(false, true); // bypassPrereq = false, bypassCredit = true
   };
 
   const handleSaveSemester = async (bypassPrereq = false, bypassCredit = false) => {
@@ -156,11 +157,12 @@ const StudyPlan = ({ student_id }) => {
     }
 
     // 3. If no credit limit issue, just save
-    await performSave(bypassPrereq);
+    await performSave(bypassPrereq, bypassCredit);
   };
 
-  const performSave = async (bypassPrereq = false) => {
+  const performSave = async (bypassPrereq = false, bypassCredit = false) => {
     setIsSaving(true);
+    setBackendError(null);
     const targetSemester = isEditing ? selectedSem.number : savedSemesters.length + 1;
 
     try {
@@ -169,15 +171,25 @@ const StudyPlan = ({ student_id }) => {
         await api.deleteSemester(student_id, targetSemester);
       }
       
-      // Save each course
+      // Save each course - ADD BYPASS FLAG TO API CALL
       for (const course of currentSelection) {
-        await api.addCourse({
+        const payload = {
           student_id: student_id.trim(),
           course_code: course.course_code,
           semester_number: targetSemester,
           grade: semStatus === 'Complete' ? (course.grade || "") : "",
           status: semStatus === 'Complete' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned')
-        });
+        };
+        
+        // Add bypass flag if user chose "Save Anyway"
+        if (bypassCredit) {
+          payload.bypass_credit_limit = true;
+        }
+        if (bypassPrereq) {
+          payload.bypass_prereq = true;
+        }
+        
+        await api.addCourse(payload);
       }
 
       // Refresh data
@@ -186,8 +198,24 @@ const StudyPlan = ({ student_id }) => {
       
       resetForm();
     } catch (error) {
-      // Handle other backend errors
-      alert("Error saving semester: " + error.message);
+      // Handle backend errors (including 400 for credit limit)
+      console.error("Backend error:", error);
+      
+      if (error.response?.status === 400) {
+        // Backend rejected due to credit limit
+        setBackendError({
+          title: "Backend Validation Failed",
+          message: error.response.data?.message || "The server rejected the save due to credit limit violation. You may need administrative approval.",
+          details: `Semester ${targetSemester} exceeds credit limits.`
+        });
+      } else {
+        // Other errors
+        setBackendError({
+          title: "Save Failed",
+          message: error.message || "An unknown error occurred while saving.",
+          details: "Please try again or contact support."
+        });
+      }
     } finally {
       setIsSaving(false);
     }
@@ -312,6 +340,7 @@ const StudyPlan = ({ student_id }) => {
     setSearchQuery('');
     setPendingError(null);
     setCreditLimitError(null);
+    setBackendError(null);
   };
 
   const getGradeColor = (grade) => {
@@ -346,7 +375,51 @@ const StudyPlan = ({ student_id }) => {
 
   return (
     <div className="dashboard-wrapper">
-      {/* Credit Limit Error Modal - POPS UP WHEN USER CLICKS SAVE */}
+      {/* Backend Error Modal */}
+      {backendError && (
+        <div className="modal-overlay">
+          <div className="class-modal-card-content">
+            <div className="modal-header">
+              <div className="error-title-row">
+                <AlertTriangle color="#ff6b6b" size={24} />
+                <h3 style={{margin: 0, color: '#ff6b6b'}}>{backendError.title}</h3>
+              </div>
+              <X className="close-icon" onClick={() => setBackendError(null)} />
+            </div>
+            <div className="modal-body-text">
+              <p>{backendError.message}</p>
+              {backendError.details && (
+                <p style={{ fontSize: '14px', opacity: 0.8, marginTop: '10px' }}>
+                  {backendError.details}
+                </p>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="modal-cancel-btn" 
+                onClick={() => setBackendError(null)}
+              >
+                OK
+              </button>
+              <button 
+                className="modal-save-anyway-btn" 
+                onClick={() => {
+                  setBackendError(null);
+                  // Try to save with admin override flag
+                  if (window.confirm("Contact administrator for override approval?")) {
+                    // You could implement admin override here
+                    console.log("Admin override requested");
+                  }
+                }}
+              >
+                Request Admin Override
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credit Limit Error Modal */}
       {creditLimitError && (
         <div className="modal-overlay">
           <div className="class-modal-card-content">
@@ -459,7 +532,6 @@ const StudyPlan = ({ student_id }) => {
               <h3>Semester {selectedSem.number} Details</h3>
             </div>
             
-            {/* Credit Warning Banner in Semester Detail View */}
             <CreditWarningBanner semesterNumber={selectedSem.number} />
             
             <table className="table-container">
@@ -499,7 +571,6 @@ const StudyPlan = ({ student_id }) => {
                 {isEditing ? `Editing Semester ${selectedSem?.number}` : `Create Semester ${savedSemesters.length + 1}`}
               </h3>
               
-              {/* Status Toggle */}
               <div className="status-toggle-group">
                 {['Planned', 'Current', 'Complete'].map(s => (
                   <button 
@@ -517,7 +588,6 @@ const StudyPlan = ({ student_id }) => {
                 ))}
               </div>
               
-              {/* Credit Counter with Warning */}
               {(() => {
                 const targetSemester = isEditing ? selectedSem?.number : savedSemesters.length + 1;
                 const creditInfo = getCreditLimitInfo(targetSemester);
@@ -546,7 +616,7 @@ const StudyPlan = ({ student_id }) => {
                 <button className="modal-cancel-btn" onClick={resetForm}>Cancel</button>
                 <button 
                   className="save-anyway-btn" 
-                  onClick={() => handleSaveSemester(false, false)} // Check both prerequisites and credit limit
+                  onClick={() => handleSaveSemester(false, false)}
                   disabled={isSaving || currentSelection.length === 0}
                 >
                   {isSaving ? 'Saving...' : 'Save Semester'}
