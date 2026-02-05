@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   FaPlus, FaTrash, FaChevronLeft, FaSearch, 
@@ -27,8 +26,32 @@ function StudyPlan({ user }) {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [expandedSem, setExpandedSem] = useState(null);
   const [creditLimitError, setCreditLimitError] = useState(null);
-
+  
   const gradeOptions = ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"];
+
+  // Helper function to get max credits based on previous semester status and GPA
+  const getMaxCreditsForSemester = (semesterNumber) => {
+    // First semester ever or no previous semester
+    if (semesterNumber === 1) {
+      return 15;
+    }
+    
+    const prevSemester = savedSemesters.find(sem => sem.number === semesterNumber - 1);
+    
+    // If previous semester is Planned or Current (no GPA yet)
+    if (!prevSemester || prevSemester.status === 'Planned' || prevSemester.status === 'Current') {
+      return 15;
+    }
+    
+    // Previous semester is Complete
+    if (prevSemester.status === 'Complete') {
+      const prevGPA = parseFloat(prevSemester.gpa) || 0;
+      return prevGPA >= 2.0 ? 15 : 11;
+    }
+    
+    // Default fallback
+    return 15;
+  };
 
   const getCleanPrereq = (val) => {
     if (!val) return null;
@@ -36,36 +59,12 @@ function StudyPlan({ user }) {
     return ignore.includes(String(val).trim().toLowerCase()) ? null : String(val).trim();
   };
 
-  // NEW: Smart function to get max credits based on actual completed semesters
-  const getMaxCreditsForSemester = (targetSemesterNumber) => {
-    // If no semesters exist yet, default to 15 credits
-    if (savedSemesters.length === 0) {
-      return 15;
-    }
-
-    // Find the previous semester (targetSemesterNumber - 1)
-    const prevSemNumber = targetSemesterNumber - 1;
-    const prevSemester = savedSemesters.find(s => s.number === prevSemNumber);
-
-    // If previous semester doesn't exist OR is not "Complete", use default 15
-    if (!prevSemester || prevSemester.status !== 'Complete') {
-      return 15;
-    }
-
-    // Only check GPA if previous semester is COMPLETED
-    // Parse GPA as float (handle "0.00" string)
-    const prevGPA = parseFloat(prevSemester.gpa) || 0;
-    
-    // GPA < 2.0 → 11 credits, otherwise 15 credits
-    return prevGPA < 2.0 ? 11 : 15;
-  };
-
   const handleAddCourse = (course) => {
     if (currentSelection.some(c => c.course_code === course.course_code)) {
       alert(`You have already added [${course.course_code}] to this semester.`);
       return;
     }
-
+    
     let existingRecord = null;
     let existingSemNumber = null;
     savedSemesters.forEach(sem => {
@@ -86,7 +85,7 @@ function StudyPlan({ user }) {
         return;
       }
     }
-
+    
     const prereq = getCleanPrereq(course.pre_requisite);
     if (prereq) {
       alert(`Note: This course requires [${prereq.toUpperCase()}]. Please ensure the prerequisite is completed first!`);
@@ -103,33 +102,29 @@ function StudyPlan({ user }) {
   const handleSaveSemester = async (bypass = false) => {
     // Ensure targetSemester is an Integer
     const targetSemester = parseInt(isEditing ? selectedSem.number : savedSemesters.length + 1);
-
+    
     if (!bypass) {
       let errorMsg = null;
       
-      // FIXED: Use smart credit limit check
+      // Check credit limit with the proper rules
       const currentCredits = calculateCurrentCredits();
       const maxCredits = getMaxCreditsForSemester(targetSemester);
       
       if (currentCredits > maxCredits) {
-        // Get previous semester info for better error message
-        const prevSemNumber = targetSemester - 1;
-        const prevSemester = savedSemesters.find(s => s.number === prevSemNumber);
+        const prevSemester = savedSemesters.find(sem => sem.number === targetSemester - 1);
+        const prevGPA = prevSemester?.status === 'Complete' ? parseFloat(prevSemester.gpa) || 0 : null;
         
-        if (!prevSemester) {
-          errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester.`;
-        } else if (prevSemester.status !== 'Complete') {
+        if (targetSemester === 1 || !prevSemester || prevSemester.status !== 'Complete') {
           errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester.`;
         } else {
-          const prevGPA = parseFloat(prevSemester.gpa) || 0;
-          errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester. Students with GPA below 2.0 are limited to 11 credits, others can take up to 15 credits. (Previous semester GPA: ${prevGPA.toFixed(2)})`;
+          errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester. Students with GPA below 2.0 in the previous semester are limited to 11 credits, others can take up to 15 credits.`;
         }
         
         setCreditLimitError(errorMsg);
         return;
       }
-
-      // Check prerequisites
+      
+      // Prerequisite checking logic
       for (const course of currentSelection) {
         let prereqs = [];
         if (Array.isArray(course.pre_requisite)) {
@@ -138,16 +133,14 @@ function StudyPlan({ user }) {
           const singleP = getCleanPrereq(course.pre_requisite);
           if (singleP) prereqs = [singleP];
         }
-
         for (const pCode of prereqs) {
           const cleanP = pCode.trim();
           const inSame = currentSelection.some(c => c.course_code === cleanP);
           const hasPassed = savedSemesters.some(s => 
             s.courses.some(c => c.course_code === cleanP && c.grade && c.grade !== "" && c.grade !== "F")
           );
-
           if (inSame) {
-            errorMsg = `Case A: [${course.course_code}] and its prerequisite [${cleanP}] are in the same semester. You need chair approval / chair approval and an attempt to [${cleanP}] .`;
+            errorMsg = `Case A: [${course.course_code}] and its prerequisite [${cleanP}] are in the same semester. You need chair approval / chair approval and an attempt to [${cleanP}].`;
             break;
           } else if (!hasPassed) {
             errorMsg = `Case B: [${course.course_code}] requires [${cleanP}]. To take [${course.course_code}] first you need chair approval and an attempt to [${cleanP}].`;
@@ -156,21 +149,23 @@ function StudyPlan({ user }) {
         }
         if (errorMsg) break;
       }
-
+      
       if (errorMsg) {
         setPendingError(errorMsg);
         return;
       }
     }
-
+    
     setIsSaving(true);
     setPendingError(null);
+    setCreditLimitError(null);
+    
     try {
       if (isEditing) {
         await api.deleteSemester(user.student_id, targetSemester);
       }
       
-      // FIX: Use sequential saving and strict data typing for UUID and Semester
+      // Use sequential saving and strict data typing for UUID and Semester
       for (const course of currentSelection) {
         await api.addCourse({
           student_id: String(user.student_id).trim(), // Force UUID string
@@ -180,7 +175,7 @@ function StudyPlan({ user }) {
           status: semStatus === 'Complete' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned')
         });
       }
-
+      
       await fetchSemesterCredits();
       await fetchUserPlan();
       resetForm();
@@ -285,7 +280,6 @@ function StudyPlan({ user }) {
       // Core Specialisation tabs
       'Offshore': async () => {
         const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-        // Filter for Offshore specialization - you may need to adjust this based on your backend data structure
         return Array.isArray(allCourses) 
           ? allCourses.filter(course => course.specialization === 'Offshore' || 
                                        course.course_name?.includes('Offshore'))
@@ -317,7 +311,7 @@ function StudyPlan({ user }) {
       'core': () => api.getCourses(), // Default for General Pathway
       'spec': () => api.getCoreSpecializationCourses(user.student_id), // Default for Core Specialisation
     };
-
+    
     const fetchFunction = fetchMap[tabName] || (() => api.getCourses());
     
     try {
@@ -356,7 +350,7 @@ function StudyPlan({ user }) {
     setView('list');
     setSearchQuery('');
     setPendingError(null);
-    setCreditLimitError(null); 
+    setCreditLimitError(null);
   };
 
   const calculateCurrentCredits = () => 
@@ -372,6 +366,7 @@ function StudyPlan({ user }) {
 
   return (
     <div className="dashboard-wrapper">
+      {/* Pending Error Modal */}
       {pendingError && (
         <div className="modal-overlay">
           <div className="glass-card modal-content">
@@ -391,6 +386,7 @@ function StudyPlan({ user }) {
         </div>
       )}
 
+      {/* Credit Limit Error Modal */}
       {creditLimitError && (
         <div className="modal-overlay">
           <div className="glass-card modal-content">
@@ -460,38 +456,45 @@ function StudyPlan({ user }) {
               </div>
             </div>
             
-            {/* FIXED: Credit warning display - only check COMPLETED semesters */}
+            {/* Credit warning display for viewed semesters */}
             {(() => {
               const semCredits = semesterCredits[selectedSem.number] || 0;
-              const prevSemNumber = selectedSem.number - 1;
-              const prevSemester = savedSemesters.find(s => s.number === prevSemNumber);
+              const maxCredits = getMaxCreditsForSemester(selectedSem.number);
               
-              // Only check if previous semester exists AND is Complete
-              if (prevSemester && prevSemester.status === 'Complete') {
-                const prevGPA = parseFloat(prevSemester.gpa) || 0;
-                const maxCredits = prevGPA < 2.0 ? 11 : 15;
+              if (semCredits > maxCredits) {
+                const prevSemNumber = selectedSem.number - 1;
+                const prevSemester = savedSemesters.find(s => s.number === prevSemNumber);
                 
-                if (semCredits > maxCredits) {
-                  return (
-                    <div style={{
-                      backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                      border: '1px solid rgba(255, 107, 107, 0.3)',
-                      borderRadius: '8px',
-                      padding: '15px',
-                      marginBottom: '20px',
-                      color: '#ff6b6b'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                        <FaExclamationTriangle />
-                        <strong>Credit Limit Exceeded</strong>
-                      </div>
-                      <div style={{ fontSize: '14px' }}>
-                        This semester has {semCredits} credits, exceeding the maximum allowed of {maxCredits} credits.
-                        {prevGPA < 2.0 ? ` (Previous semester GPA: ${prevGPA.toFixed(2)} < 2.0)` : ` (Previous semester GPA: ${prevGPA.toFixed(2)} ≥ 2.0)`}
-                      </div>
-                    </div>
-                  );
+                let reasonText = '';
+                if (selectedSem.number === 1) {
+                  reasonText = 'First semester limit is 15 credits';
+                } else if (!prevSemester || prevSemester.status !== 'Complete') {
+                  reasonText = 'Previous semester was not completed';
+                } else {
+                  const prevGPA = parseFloat(prevSemester.gpa) || 0;
+                  reasonText = prevGPA < 2.0 ? 
+                    'Previous semester GPA < 2.0 (11 credit limit)' : 
+                    'Previous semester GPA ≥ 2.0 (15 credit limit)';
                 }
+                
+                return (
+                  <div style={{
+                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                    border: '1px solid rgba(255, 107, 107, 0.3)',
+                    borderRadius: '8px',
+                    padding: '15px',
+                    marginBottom: '20px',
+                    color: '#ff6b6b'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                      <FaExclamationTriangle />
+                      <strong>Credit Limit Exceeded</strong>
+                    </div>
+                    <div style={{ fontSize: '14px' }}>
+                      This semester has {semCredits} credits, exceeding the maximum allowed of {maxCredits} credits. ({reasonText})
+                    </div>
+                  </div>
+                );
               }
               return null;
             })()}
@@ -507,6 +510,7 @@ function StudyPlan({ user }) {
                 <div className="gpa-label">Credits: {semesterCredits[selectedSem.number] || 0}</div>
               </div>
             </div>
+            
             <div className="table-container">
               <div className="table-header">
                 <span style={{flex: 1, paddingLeft: '10px'}}>Course Details</span>
@@ -538,7 +542,7 @@ function StudyPlan({ user }) {
                       <button key={s} type="button" onClick={() => setSemStatus(s)} className="status-tab" style={{ background: semStatus === s ? '#81c784' : 'transparent', color: semStatus === s ? '#000' : '#888' }}>{s}</button>
                     ))}
                   </div>
-                  {/* FIXED: Use smart credit limit calculation */}
+                  
                   <div className="credit-counter" style={{ 
                     borderColor: calculateCurrentCredits() > getMaxCreditsForSemester(isEditing ? selectedSem?.number : savedSemesters.length + 1) ? '#ff6b6b' : 'rgba(255,255,255,0.1)', 
                     backgroundColor: calculateCurrentCredits() > getMaxCreditsForSemester(isEditing ? selectedSem?.number : savedSemesters.length + 1) ? 'rgba(255, 107, 107, 0.1)' : 'transparent' 
@@ -562,6 +566,7 @@ function StudyPlan({ user }) {
                   </div>
                 </div>
               </div>
+              
               <div className="selection-list">
                 {currentSelection.length === 0 ? (
                   <div className="empty-prompt">Drag courses here or click on courses</div>
@@ -578,7 +583,10 @@ function StudyPlan({ user }) {
                     <tbody>
                       {currentSelection.map(course => (
                         <tr key={course.course_code} className="builder-table-row">
-                          <td style={{ padding: '12px' }}><div style={{ fontWeight: 'bold', color: 'white' }}>{course.course_code}</div><div style={{ fontSize: '12px', color: '#aaa' }}>{course.course_name}</div></td>
+                          <td style={{ padding: '12px' }}>
+                            <div style={{ fontWeight: 'bold', color: 'white' }}>{course.course_code}</div>
+                            <div style={{ fontSize: '12px', color: '#aaa' }}>{course.course_name}</div>
+                          </td>
                           <td style={{ textAlign: 'center', color: '#64b5f6' }}>{courseCreditsMap[course.course_code] || 3}</td>
                           {semStatus === 'Complete' && (
                             <td style={{ textAlign: 'center' }}>
@@ -588,16 +596,21 @@ function StudyPlan({ user }) {
                               </select>
                             </td>
                           )}
-                          <td style={{ textAlign: 'center' }}><FaTrash onClick={() => setCurrentSelection(currentSelection.filter(c => c.course_code !== course.course_code))} className="trash-icon" /></td>
+                          <td style={{ textAlign: 'center' }}>
+                            <FaTrash onClick={() => setCurrentSelection(currentSelection.filter(c => c.course_code !== course.course_code))} className="trash-icon" />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 )}
               </div>
+              
               <div className="btn-row">
                 <button className="cancel-btn" onClick={resetForm}>Cancel</button>
-                <button className="save-btn" onClick={() => handleSaveSemester(false)} disabled={isSaving || currentSelection.length === 0} style={{ opacity: isSaving ? 0.7 : 1 }}>{isSaving ? 'Saving...' : 'Save Semester'}</button>
+                <button className="save-btn" onClick={() => handleSaveSemester(false)} disabled={isSaving || currentSelection.length === 0} style={{ opacity: isSaving ? 0.7 : 1 }}>
+                  {isSaving ? 'Saving...' : 'Save Semester'}
+                </button>
               </div>
             </div>
             
@@ -637,7 +650,7 @@ function StudyPlan({ user }) {
                   ))}
                 </div>
               )}
-
+              
               {activeMainTab === 'spec' && (
                 <div className="sub-tabs">
                   {['Offshore','Environmental','Sustainability','Renewable Energy'].map(sub => (
