@@ -1,259 +1,139 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  FaPlus, FaTrash, FaChevronLeft, FaSearch, 
-  FaEdit, FaExclamationTriangle, FaTimes, FaFilePdf 
-} from 'react-icons/fa';
-import { api } from "../utils/api";
-import { generatePDFReport} from '../utils/reportGenerator';
-import './StudyPlan.css';
+  Plus, Trash2, Save, X, AlertTriangle, FileText, 
+  ChevronRight, ChevronDown, LayoutGrid, List, Info, 
+  Search, BookOpen, GraduationCap, Calendar, CheckCircle2 
+} from 'lucide-react';
+import { api } from './api';
 
-function StudyPlan({ user }) {
+const StudyPlan = ({ student_id }) => {
   const [view, setView] = useState('list');
   const [savedSemesters, setSavedSemesters] = useState([]);
   const [currentSelection, setCurrentSelection] = useState([]);
-  const [semStatus, setSemStatus] = useState('Planned');
   const [selectedSem, setSelectedSem] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeMainTab, setActiveMainTab] = useState('core'); // 'core' or 'spec'
-  const [activeSubTab, setActiveSubTab] = useState('All');   // 'All', 'NR', 'UR', etc.
-  const [curriculumPool, setCurriculumPool] = useState([]);
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [activeMainTab, setActiveMainTab] = useState('core');
+  const [activeSubTab, setActiveSubTab] = useState('All');
+  const [curriculumPool, setCurriculumPool] = useState(null);
   const [semesterCredits, setSemesterCredits] = useState({});
   const [courseCreditsMap, setCourseCreditsMap] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [pendingError, setPendingError] = useState(null);
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [expandedSem, setExpandedSem] = useState(null);
   const [creditLimitError, setCreditLimitError] = useState(null);
-  
-  const gradeOptions = ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"];
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
-  // Helper function to get max credits based on previous semester status and GPA
-  const getMaxCreditsForSemester = (semesterNumber) => {
-    // First semester ever or no previous semester
-    if (semesterNumber === 1) {
-      return 15;
-    }
-    
-    const prevSemester = savedSemesters.find(sem => sem.number === semesterNumber - 1);
-    
-    // If previous semester is Planned or Current (no GPA yet)
-    if (!prevSemester || prevSemester.status === 'Planned' || prevSemester.status === 'Current') {
-      return 15;
-    }
-    
-    // Previous semester is Complete
-    if (prevSemester.status === 'Complete') {
-      const prevGPA = parseFloat(prevSemester.gpa) || 0;
-      return prevGPA >= 2.0 ? 15 : 11;
-    }
-    
-    // Default fallback
-    return 15;
-  };
-
-  const getCleanPrereq = (val) => {
-    if (!val) return null;
-    const ignore = ["null", "none", "-", "", "undefined", "n/a", "[]"];
-    return ignore.includes(String(val).trim().toLowerCase()) ? null : String(val).trim();
+  const getCleanPrereq = (prereq) => {
+    if (!prereq || prereq === "none" || prereq === "-" || prereq === "---" || prereq === "undefined" || prereq === "n/a") return null;
+    return typeof prereq === 'string' ? prereq.split(',').map(s => s.trim().toUpperCase()) : [String(prereq).toUpperCase()];
   };
 
   const handleAddCourse = (course) => {
     if (currentSelection.some(c => c.course_code === course.course_code)) {
-      alert(`You have already added [${course.course_code}] to this semester.`);
+      alert("You already added this course to this semester.");
       return;
     }
-    
-    let existingRecord = null;
-    let existingSemNumber = null;
-    savedSemesters.forEach(sem => {
-      const found = sem.courses.find(c => c.course_code === course.course_code);
-      if (found) {
-        existingRecord = found;
-        existingSemNumber = sem.number;
-      }
-    });
-
-    if (existingRecord) {
-      if (!existingRecord.grade || existingRecord.grade.trim() === "") {
-        alert(`You have already added [${course.course_code}] in Semester ${existingSemNumber}.`);
-        return;
-      }
-      if (existingRecord.grade !== "F") {
-        alert(`You have already completed [${course.course_code}] in Semester ${existingSemNumber} with grade [${existingRecord.grade}]. Only 'F' grades can be retaken.`);
-        return;
-      }
-    }
-    
-    const prereq = getCleanPrereq(course.pre_requisite);
-    if (prereq) {
-      alert(`Note: This course requires [${prereq.toUpperCase()}]. Please ensure the prerequisite is completed first!`);
-    }
-    
     setCurrentSelection([...currentSelection, { ...course, grade: "" }]);
   };
 
-  const handleSaveAnywayWithCreditLimit = async () => {
-    setCreditLimitError(null);
-    await handleSaveSemester(true);
-  };
-
   const handleSaveSemester = async (bypass = false) => {
-    // Ensure targetSemester is an Integer
-    const targetSemester = parseInt(isEditing ? selectedSem.number : savedSemesters.length + 1);
-    
-    if (!bypass) {
-      let errorMsg = null;
-      
-      // Check credit limit with the proper rules
-      const currentCredits = calculateCurrentCredits();
-      const maxCredits = getMaxCreditsForSemester(targetSemester);
-      
-      if (currentCredits > maxCredits) {
-        const prevSemester = savedSemesters.find(sem => sem.number === targetSemester - 1);
-        const prevGPA = prevSemester?.status === 'Complete' ? parseFloat(prevSemester.gpa) || 0 : null;
-        
-        if (targetSemester === 1 || !prevSemester || prevSemester.status !== 'Complete') {
-          errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester.`;
-        } else {
-          errorMsg = `Credit Limit Exceeded: You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxCredits} credits for this semester. Students with GPA below 2.0 in the previous semester are limited to 11 credits, others can take up to 15 credits.`;
-        }
-        
-        setCreditLimitError(errorMsg);
-        return;
-      }
-      
-      // Prerequisite checking logic
-      for (const course of currentSelection) {
-        let prereqs = [];
-        if (Array.isArray(course.pre_requisite)) {
-          prereqs = course.pre_requisite;
-        } else {
-          const singleP = getCleanPrereq(course.pre_requisite);
-          if (singleP) prereqs = [singleP];
-        }
-        for (const pCode of prereqs) {
-          const cleanP = pCode.trim();
-          const inSame = currentSelection.some(c => c.course_code === cleanP);
-          const hasPassed = savedSemesters.some(s => 
-            s.courses.some(c => c.course_code === cleanP && c.grade && c.grade !== "" && c.grade !== "F")
-          );
-          if (inSame) {
-            errorMsg = `Case A: [${course.course_code}] and its prerequisite [${cleanP}] are in the same semester. You need chair approval / chair approval and an attempt to [${cleanP}].`;
-            break;
-          } else if (!hasPassed) {
-            errorMsg = `Case B: [${course.course_code}] requires [${cleanP}]. To take [${course.course_code}] first you need chair approval and an attempt to [${cleanP}].`;
-            break;
-          }
-        }
-        if (errorMsg) break;
-      }
-      
-      if (errorMsg) {
-        setPendingError(errorMsg);
-        return;
-      }
-    }
-    
-    setIsSaving(true);
-    setPendingError(null);
+    if (!student_id) return;
     setCreditLimitError(null);
-    
+    setIsSaving(true);
+
     try {
-      if (isEditing) {
-        await api.deleteSemester(user.student_id, targetSemester);
-      }
-      
-      // Use sequential saving and strict data typing for UUID and Semester
+      const targetSemester = isEditing ? selectedSem.number : savedSemesters.length + 1;
+
+      // The credit validation logic (11 vs 15) is now handled by the backend.
+      // We send the courses to the API, and if it violates the rules, 
+      // the backend returns an error message.
       for (const course of currentSelection) {
         await api.addCourse({
-          student_id: String(user.student_id).trim(), // Force UUID string
-          course_code: String(course.course_code),
-          semester: targetSemester, // Forced to Integer above
-          grade: semStatus === 'Complete' ? (course.grade || "") : "",
-          status: semStatus === 'Complete' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned')
+          student_id: student_id.trim(),
+          course_code: course.course_code,
+          semester_number: targetSemester,
+          grade: course.grade || "",
+          status: (course.grade && course.grade !== "" && course.grade !== "None") ? 'Complete' : 'Planned'
         });
       }
-      
-      await fetchSemesterCredits();
-      await fetchUserPlan();
+
+      await fetchStudentPlan();
       resetForm();
     } catch (error) {
-      alert("System Error: " + error.message);
+      // Your partner's backend error message will be set here and shown in your modal
+      setCreditLimitError(error.message);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleGeneratePDF = async () => {
-    if (!user?.student_id) {
-      alert("User information not available");
-      return;
-    }
+  const generatePDFReport = async () => {
+    if (!student_id) return;
     setIsGeneratingReport(true);
     try {
-      const reportData = await api.getReportData(user.student_id);
-      await generatePDFReport(user, reportData); 
+      const reportData = await api.getReportData(student_id);
+      console.log("Generating report with:", reportData);
+      // Logic for PDF generation goes here
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Failed to generate PDF report. Please try again.");
     } finally {
       setIsGeneratingReport(false);
     }
   };
 
-  const fetchUserPlan = useCallback(async () => {
-    if (!user?.student_id) return;
+  const fetchStudentPlan = useCallback(async () => {
+    if (!student_id) return;
     try {
-      const data = await api.getStudentPlan(user.student_id);
+      const data = await api.getStudentPlan(student_id);
       const grouped = data.reduce((acc, item) => {
-        if (!acc[item.semester]) {
-          acc[item.semester] = { 
-            number: item.semester, 
-            status: item.status, 
-            courses: [], 
-            gpa: "0.00" 
+        const semKey = item.semester_number || 'Other';
+        if (!acc[semKey]) {
+          acc[semKey] = {
+            number: semKey,
+            status: item.status,
+            courses: [],
+            gpa: "0.00"
           };
         }
-        acc[item.semester].courses.push({
+        acc[semKey].courses.push({
           course_code: item.course_code,
-          course_name: item.COURSE?.course_name || "Unknown",
+          course_name: item.course?.course_name || "Unknown",
           grade: item.grade || "",
-          pre_requisite: item.COURSE?.pre_requisite || null
+          pre_requisite: item.course?.pre_requisite || null
         });
         return acc;
       }, {});
-      
+
       const finalized = await Promise.all(
         Object.values(grouped).map(async (sem) => {
-          const gpaData = await api.getGPA(user.student_id, sem.number);
-          return { ...sem, gpa: gpaData.student_gpa || "0.00" };
+          try {
+            const gpaData = await api.getGPA(student_id, sem.number);
+            return { ...sem, gpa: gpaData?.gpa || "0.00" };
+          } catch {
+            return { ...sem, gpa: "0.00" };
+          }
         })
       );
-      
       setSavedSemesters(finalized.sort((a, b) => a.number - b.number));
-    } catch (err) { 
-      console.error(err); 
+    } catch (err) {
+      console.error(err);
     }
-  }, [user?.student_id]);
+  }, [student_id]);
 
   const fetchSemesterCredits = useCallback(async () => {
-    if (!user?.student_id) return;
+    if (!student_id) return;
     try {
-      const data = await api.getSummary(user.student_id);
-      if (data.semester_credits) {
-        const creditsMap = {};
-        Object.entries(data.semester_credits).forEach(([key, value]) => {
-          const semNum = key.replace(/\D/g, '');
-          if (semNum) creditsMap[semNum] = value;
-        });
-        setSemesterCredits(creditsMap);
-      }
-    } catch (err) { 
-      console.error(err); 
+      const data = await api.getSummary(student_id);
+      const creditsMap = {};
+      Object.entries(data.semester_credits).forEach(([key, value]) => {
+        const semNum = key.replace(/\D/g, '');
+        if (semNum) creditsMap[semNum] = value;
+      });
+      setSemesterCredits(creditsMap);
+    } catch (err) {
+      console.error(err);
     }
-  }, [user?.student_id]);
+  }, [student_id]);
 
   const fetchCourseCredits = useCallback(async () => {
     try {
@@ -263,341 +143,190 @@ function StudyPlan({ user }) {
         data.forEach(c => map[c.course_code] = c.credit_hour);
         setCourseCreditsMap(map);
       }
-    } catch (err) { 
-      console.error(err); 
+    } catch (err) {
+      console.error(err);
     }
   }, []);
 
   const fetchPool = useCallback(async (tabName) => {
-    const fetchMap = {
-      // General Pathway tabs
-      'All': () => api.getCourses(),
-      'NR': () => api.getNationalRequirementCourses(user.student_id),
-      'UR': () => api.getUniversityRequirementCourses(user.student_id),
-      'CC': () => api.getCommonCourses(user.student_id),
-      'CD': () => api.getCoreDisciplineCourses(user.student_id),
-      
-      // Core Specialisation tabs
-      'Offshore': async () => {
-        const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-        return Array.isArray(allCourses) 
-          ? allCourses.filter(course => course.specialization === 'Offshore' || 
-                                       course.course_name?.includes('Offshore'))
-          : [];
-      },
-      'Environmental': async () => {
-        const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-        return Array.isArray(allCourses) 
-          ? allCourses.filter(course => course.specialization === 'Environmental' || 
-                                       course.course_name?.includes('Environmental'))
-          : [];
-      },
-      'Sustainability': async () => {
-        const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-        return Array.isArray(allCourses) 
-          ? allCourses.filter(course => course.specialization === 'Sustainability' || 
-                                       course.course_name?.includes('Sustainability'))
-          : [];
-      },
-      'Renewable Energy': async () => {
-        const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-        return Array.isArray(allCourses) 
-          ? allCourses.filter(course => course.specialization === 'Renewable Energy' || 
-                                       course.course_name?.includes('Renewable'))
-          : [];
-      },
-      
-      // Fallback
-      'core': () => api.getCourses(), // Default for General Pathway
-      'spec': () => api.getCoreSpecializationCourses(user.student_id), // Default for Core Specialisation
-    };
-    
-    const fetchFunction = fetchMap[tabName] || (() => api.getCourses());
-    
     try {
-      const data = await fetchFunction();
-      const rawList = Array.isArray(data) ? data : (data.courses || []);
-      const grouped = rawList.reduce((acc, course) => {
-        const sem = course.course_semester || 'Other';
-        if (!acc[sem]) acc[sem] = [];
-        acc[sem].push(course);
-        return acc;
-      }, {});
-      
-      setCurriculumPool(grouped);
-      setExpandedSem(null);
-    } catch (err) { 
-      console.error(err); 
-      setCurriculumPool({});
+      let fetchFunction;
+      switch (tabName) {
+        case 'NR': fetchFunction = api.getNationalRequirementCourses; break;
+        case 'UR': fetchFunction = api.getUniversityRequirementCourses; break;
+        case 'CC': fetchFunction = api.getCommonCourses; break;
+        case 'CD': fetchFunction = api.getCoreDisciplineCourses; break;
+        default: fetchFunction = api.getCoreSpecializationCourses;
+      }
+
+      const data = await fetchFunction(student_id);
+      setCurriculumPool(data);
+    } catch (err) {
+      console.error(err);
     }
-  }, [user?.student_id]);
+  }, [student_id]);
 
-  useEffect(() => { 
-    fetchSemesterCredits(); 
-    fetchCourseCredits(); 
-    fetchUserPlan();
-  }, [fetchSemesterCredits, fetchCourseCredits, fetchUserPlan]);
+  useEffect(() => {
+    if (student_id) {
+      fetchStudentPlan();
+      fetchSemesterCredits();
+      fetchCourseCredits();
+    }
+  }, [student_id, fetchStudentPlan, fetchSemesterCredits, fetchCourseCredits]);
 
-  useEffect(() => { 
-    if (view === 'add') fetchPool(activeSubTab); 
-  }, [activeSubTab, view, fetchPool]);
+  useEffect(() => {
+    fetchPool(activeSubTab);
+  }, [activeSubTab, fetchPool]);
 
   const resetForm = () => {
     setCurrentSelection([]);
-    setSemStatus('Planned');
     setIsEditing(false);
     setSelectedSem(null);
-    setView('list');
     setSearchQuery('');
     setPendingError(null);
     setCreditLimitError(null);
   };
 
-  const calculateCurrentCredits = () => 
-    currentSelection.reduce((total, course) => 
-      total + (courseCreditsMap[course.course_code] || 3), 0);
-
   const getGradeColor = (grade) => {
-    const map = {
-      'A': '#4CAF50', 'B': '#CDDC39', 'C': '#FF9800', 'D': '#FF5722', 'F': '#F44336'
-    };
+    const map = { 'A': '#4CAF50', 'B': '#8BC34A', 'C': '#FFC107', 'D': '#FF9800', 'F': '#F44336' };
     return map[grade?.charAt(0)] || '#888';
   };
 
   return (
     <div className="dashboard-wrapper">
-      {/* Pending Error Modal */}
-      {pendingError && (
+      {/* Credit Limit Error Modal */}
+      {creditLimitError && (
         <div className="modal-overlay">
-          <div className="glass-card modal-content">
+          <div className="class-modal-card-content">
             <div className="modal-header">
               <div className="error-title-row">
-                <FaExclamationTriangle color="#ff6b6b" size={24} />
-                <h3 style={{margin: 0, color: '#ff6b6b'}}>Prerequisite Warning</h3>
+                <AlertTriangle color="#ff6b6b" size={24} />
+                <h3 style={{margin: 0, color: '#ff6b6b'}}>Credit Limit Warning</h3>
               </div>
-              <FaTimes className="close-icon" onClick={() => setPendingError(null)} />
+              <X className="close-icon" onClick={() => setCreditLimitError(null)} />
             </div>
-            <p className="modal-body-text">{pendingError}</p>
+            <div className="modal-body-text">{creditLimitError}</div>
             <div className="modal-footer">
-              <button className="modal-cancel-btn" onClick={() => setPendingError(null)}>Cancel & Fix</button>
-              <button className="modal-save-anyway-btn" onClick={() => handleSaveSemester(true)}>Save Anyway</button>
+              <button className="modal-cancel-btn" onClick={() => setCreditLimitError(null)}>Cancel & Fix</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Credit Limit Error Modal */}
-      {creditLimitError && (
-        <div className="modal-overlay">
-          <div className="glass-card modal-content">
-            <div className="modal-header">
-              <div className="error-title-row">
-                <FaExclamationTriangle color="#ff6b6b" size={24} />
-                <h3 style={{margin: 0, color: '#ff6b6b'}}>Credit Limit Warning</h3>
-              </div>
-              <FaTimes className="close-icon" onClick={() => setCreditLimitError(null)} />
-            </div>
-            <p className="modal-body-text">{creditLimitError}</p>
-            <div className="modal-footer">
-              <button className="modal-cancel-btn" onClick={() => setCreditLimitError(null)}>Cancel & Fix</button>
-              <button className="modal-save-anyway-btn" onClick={handleSaveAnywayWithCreditLimit}>Save Anyway</button>
-            </div>
-          </div>
-        </div>
-      )}
-      
       <div className="dashboard-content">
         <div className="header-row">
           <h2 className="dashboard-title">Academic Study Plan</h2>
-          <div className="report-button-container">
-            <button onClick={handleGeneratePDF} className="download-report-btn" disabled={isGeneratingReport}>
-              <FaFilePdf className="pdf-icon" />
-              {isGeneratingReport ? 'Generating PDF...' : 'Download PDF Report'}
-            </button>
-          </div>
+          <button 
+            className="download-report-btn" 
+            onClick={generatePDFReport}
+            disabled={isGeneratingReport}
+          >
+            {isGeneratingReport ? 'Generating...' : 'Download PDF Report'}
+          </button>
         </div>
-        
-        {view === 'list' && (
+
+        {view === 'list' ? (
           <div className="sem-buttons-grid">
             {savedSemesters.map((sem) => (
               <button 
                 key={sem.number} 
                 className="sem-button"
-                style={{ borderLeft: `4px solid ${sem.status === 'Complete' ? '#81c784' : sem.status === 'Current' ? '#64b5f6' : '#555'}` }}
                 onClick={() => { setSelectedSem(sem); setView('view'); }}
               >
                 <div className="sem-card-header">
                   <span className="sem-title">Semester {sem.number}</span>
-                  <div className="sem-badges">
-                    <span className="gpa-badge">GPA: {sem.gpa}</span>
-                    <span className="credit-badge">Credits: {semesterCredits[sem.number] || 0}</span>
-                  </div>
+                  <span className="gpa-label">GPA: {sem.gpa}</span>
                 </div>
                 <div className="sem-card-footer">
-                  <div className="course-count">{sem.courses.length} Courses</div>
-                  <span className="status-label">{sem.status}</span>
+                  <span className="course-count">{sem.courses.length} Courses</span>
                 </div>
               </button>
             ))}
             <button className="sem-button add-button" onClick={() => { resetForm(); setView('add'); }}>
-              <FaPlus className="plus-icon" /> 
-              <span className="add-text">Add Semester {savedSemesters.length + 1}</span>
+              <Plus className="plus-icon" />
+              <span>Add Semester {savedSemesters.length + 1}</span>
             </button>
           </div>
-        )}
-
-        {view === 'view' && selectedSem && (
-          <div className="glass-card view-card">
-            <div className="view-header">
-              <button className="back-btn" onClick={() => setView('list')}><FaChevronLeft /> Back</button>
-              <div className="action-btns">
-                <button className="edit-btn" onClick={() => { setCurrentSelection(selectedSem.courses); setSemStatus(selectedSem.status); setIsEditing(true); setView('add'); }}><FaEdit /> Edit</button>
-                <button className="delete-btn" onClick={async () => { if(window.confirm(`Delete Semester ${selectedSem.number}?`)) { await api.deleteSemester(user.student_id, selectedSem.number); setSavedSemesters(prev => prev.filter(sem => sem.number !== selectedSem.number)); await fetchSemesterCredits(); await fetchUserPlan(); resetForm(); } }}><FaTrash /> Delete</button>
-              </div>
+        ) : view === 'view' && selectedSem && (
+          <div className="class-modal-card-content">
+            <div className="modal-header">
+              <button className="back-btn" onClick={() => setView('list')}><ChevronDown style={{transform: 'rotate(90deg)'}} /> Back</button>
+              <h3>Semester {selectedSem.number} Details</h3>
             </div>
-            
-            {/* Credit warning display for viewed semesters */}
-            {(() => {
-              const semCredits = semesterCredits[selectedSem.number] || 0;
-              const maxCredits = getMaxCreditsForSemester(selectedSem.number);
-              
-              if (semCredits > maxCredits) {
-                const prevSemNumber = selectedSem.number - 1;
-                const prevSemester = savedSemesters.find(s => s.number === prevSemNumber);
-                
-                let reasonText = '';
-                if (selectedSem.number === 1) {
-                  reasonText = 'First semester limit is 15 credits';
-                } else if (!prevSemester || prevSemester.status !== 'Complete') {
-                  reasonText = 'Previous semester was not completed';
-                } else {
-                  const prevGPA = parseFloat(prevSemester.gpa) || 0;
-                  reasonText = prevGPA < 2.0 ? 
-                    'Previous semester GPA < 2.0 (11 credit limit)' : 
-                    'Previous semester GPA ≥ 2.0 (15 credit limit)';
-                }
-                
-                return (
-                  <div style={{
-                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                    border: '1px solid rgba(255, 107, 107, 0.3)',
-                    borderRadius: '8px',
-                    padding: '15px',
-                    marginBottom: '20px',
-                    color: '#ff6b6b'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                      <FaExclamationTriangle />
-                      <strong>Credit Limit Exceeded</strong>
-                    </div>
-                    <div style={{ fontSize: '14px' }}>
-                      This semester has {semCredits} credits, exceeding the maximum allowed of {maxCredits} credits. ({reasonText})
-                    </div>
-                  </div>
-                );
-              }
-              return null;
-            })()}
-            
-            <div className="semester-header">
-              <div className="semester-info">
-                <h3 className="view-sem-title">Semester {selectedSem.number} Details</h3>
-                <div className="status-badge">{selectedSem.status}</div>
-              </div>
-              <div className="gpa-box">
-                <div className="gpa-label">Semester GPA</div>
-                <div className="gpa-value">{selectedSem.gpa}</div>
-                <div className="gpa-label">Credits: {semesterCredits[selectedSem.number] || 0}</div>
-              </div>
-            </div>
-            
-            <div className="table-container">
-              <div className="table-header">
-                <span style={{flex: 1, paddingLeft: '10px'}}>Course Details</span>
-                <span style={{width: '80px', textAlign: 'center'}}>Credits</span>
-                <span className="grade-header">Grade</span>
-              </div>
-              {selectedSem.courses.map(course => (
-                <div key={course.course_code} className="course-row">
-                  <div style={{flex: 1, paddingLeft: '10px'}}>
-                    <div style={{color:'white', fontWeight:'bold'}}>{course.course_code}</div>
-                    <div style={{color:'white', opacity: 0.6, fontSize:'14px'}}>{course.course_name}</div>
-                  </div>
-                  <span style={{width: '80px', textAlign: 'center', color: '#64b5f6'}}>{courseCreditsMap[course.course_code] || 3}</span>
-                  <span className="grade-display" style={{ width: '70px', textAlign: 'center', color: getGradeColor(course.grade) }}>{course.grade || '-'}</span>
-                </div>
-              ))}
-            </div>
+            <table className="table-container">
+              <thead>
+                <tr>
+                  <th>Course</th>
+                  <th>Credits</th>
+                  <th>Grade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedSem.courses.map(course => (
+                  <tr key={course.course_code}>
+                    <td>{course.course_name} ({course.course_code})</td>
+                    <td>{courseCreditsMap[course.course_code] || '-'}</td>
+                    <td style={{color: getGradeColor(course.grade)}}>{course.grade || 'Planned'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
         {view === 'add' && (
-          <div className="builder-grid">
-            <div className={`glass-card drop-zone ${isDraggingOver ? 'dragging-over' : ''}`} onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }} onDragLeave={() => setIsDraggingOver(false)} onDrop={(e) => { setIsDraggingOver(false); const course = JSON.parse(e.dataTransfer.getData("course")); handleAddCourse(course); }}>
-              <div className="builder-header">
-                <h4 className="builder-title">{isEditing ? `Editing Sem ${selectedSem?.number}` : `New Semester`}</h4>
-                <div className="builder-controls">
-                  <div className="status-toggle-group">
-                    {['Planned', 'Current', 'Complete'].map(s => (
-                      <button key={s} type="button" onClick={() => setSemStatus(s)} className="status-tab" style={{ background: semStatus === s ? '#81c784' : 'transparent', color: semStatus === s ? '#000' : '#888' }}>{s}</button>
-                    ))}
-                  </div>
-                  
-                  <div className="credit-counter" style={{ 
-                    borderColor: calculateCurrentCredits() > getMaxCreditsForSemester(isEditing ? selectedSem?.number : savedSemesters.length + 1) ? '#ff6b6b' : 'rgba(255,255,255,0.1)', 
-                    backgroundColor: calculateCurrentCredits() > getMaxCreditsForSemester(isEditing ? selectedSem?.number : savedSemesters.length + 1) ? 'rgba(255, 107, 107, 0.1)' : 'transparent' 
-                  }}>
-                    <span style={{ 
-                      color: calculateCurrentCredits() > getMaxCreditsForSemester(isEditing ? selectedSem?.number : savedSemesters.length + 1) ? '#ff6b6b' : '#81c784', 
-                      fontWeight: 'bold' 
-                    }}>
-                      {calculateCurrentCredits()}
-                    </span>/{getMaxCreditsForSemester(isEditing ? selectedSem?.number : savedSemesters.length + 1)} Max
-                    {calculateCurrentCredits() > getMaxCreditsForSemester(isEditing ? selectedSem?.number : savedSemesters.length + 1) && (
-                      <div style={{ 
-                        fontSize: '10px', 
-                        color: '#ff6b6b', 
-                        marginTop: '5px',
-                        fontWeight: 'normal'
-                      }}>
-                        Exceeds limit!
-                      </div>
-                    )}
-                  </div>
-                </div>
+          <div className="builder-container">
+            <div className="builder-header">
+              <h3>Create Semester {savedSemesters.length + 1}</h3>
+              <div className="builder-controls">
+                <button className="modal-cancel-btn" onClick={resetForm}>Cancel</button>
+                <button 
+                  className="save-anyway-btn" 
+                  onClick={handleSaveSemester} 
+                  disabled={isSaving || currentSelection.length === 0}
+                >
+                  {isSaving ? 'Saving...' : 'Save Semester'}
+                </button>
               </div>
-              
-              <div className="selection-list">
+            </div>
+
+            <div className="builder-grid">
+              <div className="course-selection-list">
+                <h4>Selected Courses</h4>
                 {currentSelection.length === 0 ? (
-                  <div className="empty-prompt">Drag courses here or click on courses</div>
+                  <div className="empty-state">Drag courses here or click '+' to add</div>
                 ) : (
                   <table className="builder-table">
                     <thead>
-                      <tr className="builder-table-head">
-                        <th style={{ textAlign: 'left', padding: '12px' }}>Course</th>
-                        <th style={{ width: '80px' }}>Credits</th>
-                        {semStatus === 'Complete' && <th style={{ width: '100px' }}>Grade</th>}
-                        <th style={{ width: '50px' }}></th>
+                      <tr>
+                        <th>Course</th>
+                        <th>Grade</th>
+                        <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {currentSelection.map(course => (
-                        <tr key={course.course_code} className="builder-table-row">
-                          <td style={{ padding: '12px' }}>
-                            <div style={{ fontWeight: 'bold', color: 'white' }}>{course.course_code}</div>
-                            <div style={{ fontSize: '12px', color: '#aaa' }}>{course.course_name}</div>
+                      {currentSelection.map((course, idx) => (
+                        <tr key={idx}>
+                          <td>{course.course_name}</td>
+                          <td>
+                            <select 
+                              className="grade-select"
+                              value={course.grade}
+                              onChange={(e) => {
+                                const newSelection = [...currentSelection];
+                                newSelection[idx].grade = e.target.value;
+                                setCurrentSelection(newSelection);
+                              }}
+                            >
+                              <option value="">Planned</option>
+                              {['A', 'B', 'C', 'D', 'F'].map(g => <option key={g} value={g}>{g}</option>)}
+                            </select>
                           </td>
-                          <td style={{ textAlign: 'center', color: '#64b5f6' }}>{courseCreditsMap[course.course_code] || 3}</td>
-                          {semStatus === 'Complete' && (
-                            <td style={{ textAlign: 'center' }}>
-                              <select className="grade-select-small" value={course.grade} onChange={(e) => setCurrentSelection(currentSelection.map(c => c.course_code === course.course_code ? {...c, grade: e.target.value} : c))}>
-                                <option value="">-</option>
-                                {gradeOptions.map(g => <option key={g} value={g}>{g}</option>)}
-                              </select>
-                            </td>
-                          )}
-                          <td style={{ textAlign: 'center' }}>
-                            <FaTrash onClick={() => setCurrentSelection(currentSelection.filter(c => c.course_code !== course.course_code))} className="trash-icon" />
+                          <td>
+                            <Trash2 
+                              className="trash-icon" 
+                              onClick={() => setCurrentSelection(currentSelection.filter((_, i) => i !== idx))} 
+                            />
                           </td>
                         </tr>
                       ))}
@@ -605,94 +334,30 @@ function StudyPlan({ user }) {
                   </table>
                 )}
               </div>
-              
-              <div className="btn-row">
-                <button className="cancel-btn" onClick={resetForm}>Cancel</button>
-                <button className="save-btn" onClick={() => handleSaveSemester(false)} disabled={isSaving || currentSelection.length === 0} style={{ opacity: isSaving ? 0.7 : 1 }}>
-                  {isSaving ? 'Saving...' : 'Save Semester'}
-                </button>
-              </div>
-            </div>
-            
-            <div className="glass-card pool-card">
-              <div className="search-box">
-                <FaSearch className="search-icon" />
-                <input type="text" placeholder="Search..." className="search-input" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-              </div>
-              
-              {/* Main tabs */}
-              <div className="course-type-toggle-group">
-                <button 
-                  className={`course-type-tab ${activeMainTab === 'core' ? 'active' : ''}`}
-                  onClick={() => setActiveMainTab('core')}
-                >
-                  General Pathway
-                </button>
-                <button 
-                  className={`course-type-tab ${activeMainTab === 'spec' ? 'active' : ''}`}
-                  onClick={() => setActiveMainTab('spec')}
-                >
-                  Core Specialisation
-                </button>
-              </div>
-              
-              {/* Sub-tabs */}
-              {activeMainTab === 'core' && (
-                <div className="sub-tabs">
-                  {['All','NR','UR','CC','CD'].map(sub => (
+
+              <div className="pool-container">
+                <div className="tabs-row">
+                  {['NR', 'UR', 'CC', 'CD', 'SPEC'].map(tab => (
                     <button 
-                      key={sub}
-                      className={`sub-tab ${activeSubTab === sub ? 'active' : ''}`}
-                      onClick={() => setActiveSubTab(sub)}
+                      key={tab} 
+                      className={`tab-btn ${activeSubTab === tab ? 'active' : ''}`}
+                      onClick={() => setActiveSubTab(tab)}
                     >
-                      {sub}
+                      {tab}
                     </button>
                   ))}
                 </div>
-              )}
-              
-              {activeMainTab === 'spec' && (
-                <div className="sub-tabs">
-                  {['Offshore','Environmental','Sustainability','Renewable Energy'].map(sub => (
-                    <button 
-                      key={sub}
-                      className={`sub-tab ${activeSubTab === sub ? 'active' : ''}`}
-                      onClick={() => setActiveSubTab(sub)}
-                    >
-                      {sub}
-                    </button>
-                  ))}
-                </div>
-              )}
-              
-              <div className="pool-list-fixed">
-                {Object.keys(curriculumPool).length > 0 ? (
-                  Object.keys(curriculumPool)
-                    .sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0))
-                    .map(sem => (
-                      <div key={sem} style={{ marginBottom: '10px' }}>
-                        <div className="semester-header-label clickable" onClick={() => setExpandedSem(expandedSem === sem ? null : sem)} style={{ background: expandedSem === sem ? 'rgba(129, 199, 132, 0.1)' : 'rgba(255,255,255,0.03)' }}>
-                          <span style={{ fontWeight: 'bold' }}>Semester {sem}</span>
-                          <span>{expandedSem === sem ? '−' : '+'}</span>
-                        </div>
-                        {expandedSem === sem && (
-                          <div className="semester-courses">
-                            {curriculumPool[sem].filter(c => c.course_name?.toLowerCase().includes(searchQuery.toLowerCase()) || c.course_code?.toLowerCase().includes(searchQuery.toLowerCase())).map(course => (
-                              <div key={course.course_code} draggable onDragStart={(e) => e.dataTransfer.setData("course", JSON.stringify(course))} onClick={() => handleAddCourse(course)} className="draggable-item">
-                                <div style={{color:'white', fontWeight:'bold'}}>{course.course_code}</div>
-                                <div style={{fontSize: '12px', color: '#ccc'}}>{course.course_name}</div>
-                                <div style={{fontSize: '10px', color: '#ffb74d', marginTop: '5px'}}>
-                                  Credits: {course.credit_hour} | Pre: {Array.isArray(course.pre_requisite) ? course.pre_requisite.join(', ') : (course.pre_requisite || 'None')}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                <div className="pool-list">
+                  {curriculumPool?.map(course => (
+                    <div key={course.course_code} className="pool-item">
+                      <div className="pool-item-info">
+                        <span className="course-code">{course.course_code}</span>
+                        <span className="course-name">{course.course_name}</span>
                       </div>
-                    ))
-                ) : (
-                  <div className="empty-state">Select a category or semester</div>
-                )}
+                      <Plus className="add-icon" onClick={() => handleAddCourse(course)} />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -700,6 +365,6 @@ function StudyPlan({ user }) {
       </div>
     </div>
   );
-}
+};
 
 export default StudyPlan;
