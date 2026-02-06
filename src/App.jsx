@@ -13,7 +13,21 @@ import "./style.css";
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [theme, setTheme] = useState('dark');
 
+  // --- Theme Logic ---
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
+
+  // Ensure the theme is set on initial load and when theme state changes
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  // --- Authentication Logic ---
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -53,6 +67,7 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // --- Logout Logic ---
   const handleLogout = async () => {       
     await supabase.auth.signOut();
     window.location.href = "/login";
@@ -63,12 +78,21 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Login Route */}
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/Dashboard" />} />
         
+        {/* Protected Routes */}
         <Route path="*" element={
           user ? (
             <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "0 20px" }}>
-              <Navbar user={user} onLogout={handleLogout} />
+              {/* Navbar now receives all necessary props for both logout and theme toggle */}
+              <Navbar 
+                user={user} 
+                onLogout={handleLogout} 
+                onToggleTheme={toggleTheme} 
+                currentTheme={theme} 
+              />
+              
               <Routes>
                 <Route path="/Dashboard" element={<Dashboard user={user} />} />
                 <Route path="/MyCourses" element={<MyCourse />} />
@@ -76,6 +100,7 @@ function App() {
                 <Route path="/StudyPlan" element={<StudyPlan user={user} />} />
                 <Route path="/" element={<Navigate to="/Dashboard" />} />
               </Routes>
+              
               <AIAdvisor user={user} />
             </div>
           ) : <Navigate to="/login" />

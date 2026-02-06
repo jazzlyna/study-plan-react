@@ -27,17 +27,17 @@ const fetchAPI = async (endpoint, options = {}) => {
 
 export const api = {
   // --- AUTH ---
-  loginWithGoogle: async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin + '/Dashboard',
-      },
-    });
-    if (error) throw error;
-    return data;
-  },
-
+loginWithGoogle: async () => {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      
+      redirectTo: window.location.origin + '/Dashboard',
+    },
+  });
+  if (error) throw error;
+  return data;
+},
   // --- PROFILE ---
   getProfile: (studentId) => fetchAPI(`/student/${studentId}`),
   updateProfile: (studentId, data) =>
@@ -56,11 +56,14 @@ export const api = {
   getSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
   getCourses: () => fetchAPI(`/course/get`),
   getPool: (endpoint) => fetchAPI(`/${endpoint}`),
-  addCourse: (payload) =>
-    fetchAPI(`/student_course/add`, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    }),
+addCourse: (payload) =>
+  fetchAPI(`/student_course/add`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }).then(response => {
+    // Return the full response including academic_meta
+    return response;
+  }),
   deleteSemester: (studentId, semNum) =>
     fetchAPI(`/student_course/delete/semester/${studentId}/${semNum}`, {
       method: 'DELETE',
@@ -74,6 +77,14 @@ export const api = {
   getUniversityRequirementCourses: (studentId) => fetchAPI(`/course/get/CourseAvailable/UniversityRequirement/${studentId}`),
   getCommonCourses: (studentId) => fetchAPI(`/course/get/CourseAvailable/CommonCourse/${studentId}`),
   getCoreSpecializationCourses: (studentId) => fetchAPI(`/course/get/CourseAvailable/CoreSpecialization/${studentId}`),
+
+  // --- MY COURSE ---
+  // Add these to your api object in api.js
+  getAllNational: () => fetchAPI(`/course/get/NationalRequirement`),
+  getAllUniversity: () => fetchAPI(`/course/get/UniversityRequirement`),
+  getAllCommon: () => fetchAPI(`/course/get/CommonCourse`),
+  getAllCoreDiscipline: () => fetchAPI(`/course/get/CoreDiscipline`),
+  getAllSpecialization: () => fetchAPI(`/course/get/CoreSpecialization`),
 
   // --- AI ADVISOR ---
   getAIAnalysis: (studentId) => fetchAPI(`/advisor/ai-advisor/${studentId}`)
