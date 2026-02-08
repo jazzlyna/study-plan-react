@@ -255,29 +255,27 @@ function StudyPlan({ user }) {
                 <span className="grade-header">GRADE</span>
               </div>
               
-              {selectedSem.courses.map(course => (
-                <div key={course.course_code} className="course-row">
-                  <div>
-                    <div style={{color:'white', fontWeight:'bold'}}>{course.course_code}</div>
-                  </div>
-                  <div>
-                    <div style={{color:'white', opacity: 0.6, fontSize:'14px'}}>
-                      {course.course_name}
-                    </div>
-                  </div>
-                  <div style={{color: '#64b5f6', fontWeight:'bold'}}>
-                    {courseCreditsMap[course.course_code] || 3}
-                  </div>
-                  <span 
-                    className="grade-display" 
-                    style={{ 
-                      color: getGradeColor(course.grade) 
-                    }}
-                  >
-                    {course.grade || '-'}
-                  </span>
-                </div>
-              ))}
+{selectedSem.courses.map(course => (
+  <div key={course.course_code} className="course-row">
+    <div>
+      <div className="course-code-cell">{course.course_code}</div>
+    </div>
+    <div>
+      <div className="course-name-cell">{course.course_name}</div>
+    </div>
+    <div className="course-credit-cell">
+      {courseCreditsMap[course.course_code] || 3}
+    </div>
+    <span 
+      className="grade-display" 
+      style={{ 
+        color: getGradeColor(course.grade) 
+      }}
+    >
+      {course.grade || '-'}
+    </span>
+  </div>
+))}
             </div>
           </div>
         )}

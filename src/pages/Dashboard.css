@@ -4,6 +4,10 @@
 
 /* --- LAYOUT & CONTAINER --- */
 .dashboard-wrapper {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+
   padding: 20px;
   max-width: 1050px;
   margin: 0 auto;

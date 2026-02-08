@@ -292,17 +292,17 @@ function AIAdvisor({ user }) {
 
           <div className="ai-popup-body">
             {error ? (
-              <div className="ai-error-state">
-                <div className="error-icon">⚠️</div>
-                <p className="error-message">{error}</p>
-                <button 
-                  onClick={fetchAnalysis}
-                  className="retry-btn"
-                  disabled={loading}
-                >
-                  {loading ? "Retrying..." : "Try Again"}
-                </button>
-              </div>
+  <div className="ai-error-state">
+    <div className="error-icon">⚠️</div>
+    <p className="error-message">{error}</p>
+    <button 
+      onClick={fetchAnalysis}
+      className="retry-btn"
+      disabled={loading}
+    >
+      {loading ? "Retrying..." : "Retry"}
+    </button>
+  </div>
             ) : loading ? (
               <div className="ai-loading-state">
                 <div className="loading-spinner"></div>

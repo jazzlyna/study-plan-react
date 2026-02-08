@@ -49,55 +49,42 @@ const SemesterBuilder = ({
       onDragLeave={() => setIsDraggingOver(false)} 
       onDrop={handleDrop}
     >
-      <div className="builder-header">
-        <h4 className="builder-title">
-          {isEditing ? `Editing Sem ${selectedSem?.number}` : `New Semester`}
-        </h4>
-        <div className="builder-controls">
-          <div className="status-toggle-group">
-            {['Planned', 'Current', 'Complete'].map(s => (
-              <button 
-                key={s} 
-                type="button" 
-                onClick={() => setSemStatus(s)} 
-                className="status-tab" 
-                style={{ 
-                  background: semStatus === s ? '#81c784' : 'transparent', 
-                  color: semStatus === s ? '#000' : '#888' 
-                }}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-          
-          <div 
-            className="credit-counter" 
-            style={{ 
-              borderColor: creditLimitExceeded ? '#ff6b6b' : 'rgba(255,255,255,0.1)', 
-              backgroundColor: creditLimitExceeded ? 'rgba(255, 107, 107, 0.1)' : 'transparent' 
-            }}
-          >
-            <span style={{ 
-              color: creditLimitExceeded ? '#ff6b6b' : '#81c784', 
-              fontWeight: 'bold' 
-            }}>
-              {currentCredits}
-            </span>/{maxLimit} Max
-            
-            {creditLimitExceeded && (
-              <div style={{ 
-                fontSize: '10px', 
-                color: '#ff6b6b', 
-                marginTop: '5px',
-                fontWeight: 'normal'
-              }}>
-                Exceeds limit!
-              </div>
-            )}
-          </div>
-        </div>
+<div className="builder-header">
+  <div className="builder-title-row">
+    <h4 className="builder-title">
+      {isEditing ? `Editing Sem ${selectedSem?.number}` : `New Semester`}
+    </h4>
+    <div className="builder-controls">
+      {/* Any other controls you want on the right side */}
+    </div>
+  </div>
+  
+  <div className="builder-status-controls">
+    <div className="status-toggle-group">
+  {['Planned', 'Current', 'Complete'].map(s => (
+    <button 
+      key={s} 
+      type="button" 
+      onClick={() => setSemStatus(s)} 
+      className={`status-tab ${semStatus === s ? 'active' : ''}`}
+    >
+      {s}
+    </button>
+  ))}
+</div>
+    
+<div className="builder-status-row">
+  <div className={`credit-counter ${creditLimitExceeded ? 'warning' : ''}`}>
+    <span>{currentCredits}</span>/{maxLimit} Max
+    {creditLimitExceeded && (
+      <div style={{ fontSize: '10px', marginTop: '5px' }}>
+        Exceeds limit!
       </div>
+    )}
+  </div>
+</div>
+  </div>
+</div>
       
       <div className="selection-list">
         {currentSelection.length === 0 ? (

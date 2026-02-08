@@ -1,5 +1,6 @@
 // useStudyPlan.js - UPDATED VERSION (with credit limit fixes)
 import { useState, useEffect, useCallback } from 'react';
+import { generatePDFReport } from '../utils/reportGenerator';
 import { api } from "../utils/api";
 
 export const useStudyPlan = (user) => {

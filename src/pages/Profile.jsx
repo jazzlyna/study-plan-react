@@ -116,7 +116,7 @@ function Profile({ user }) {
 
         {/* RIGHT COLUMN - Main Details */}
         <div className="profile-details-card">
-          <h4 className="profile-section-title">Academic Details</h4>
+          <h4 className="profile-section-title">Student Details</h4>
           
           <div className="profile-info-list">
             <div className="profile-info-item">
