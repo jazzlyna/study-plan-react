@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaEnvelope, FaCheck, FaCalendarAlt, FaCamera } from 'react-icons/fa';
+import { FaEnvelope, FaCheck, FaCalendarAlt, FaCamera, FaIdBadge } from 'react-icons/fa';
 import { api } from "../utils/api";
 import defaultAvatar from "../image/default_avatar.jpg";
 import './Profile.css';
@@ -32,8 +32,8 @@ function Profile({ user }) {
           student_name: profileData.student_name || "",
           student_email: profileData.student_email || "",
           student_image: profileData.student_image || defaultAvatar,
-          student_GOT: profileData.student_GOT === "string" ? "" : (profileData.student_GOT || ""),
-          intake_session: profileData.intake_session === "string" ? "" : (profileData.intake_session || ""),
+          student_GOT: (profileData.student_GOT === "string" || !profileData.student_GOT) ? "" : profileData.student_GOT,
+          intake_session: (profileData.intake_session === "string" || !profileData.intake_session) ? "" : profileData.intake_session,
           cgpa: summaryData.student_cgpa?.toFixed(2) || "0.00",
           credits: summaryData.count_completed_course || "0"
         });
@@ -53,141 +53,122 @@ function Profile({ user }) {
   };
 
   const handleSave = async () => {
-    if (!user?.student_id || user.student_id === "undefined") {
-      alert("Invalid Student ID. Please log in again.");
-      return;
-    }
     try {
-      const cleanDate = (date) => (date && date !== "" && date !== "string") ? date : null;
       const updatePayload = {
         student_name: formData.student_name,
         student_image: formData.student_image,
-        student_GOT: cleanDate(formData.student_GOT),
-        intake_session: cleanDate(formData.intake_session)
+        student_GOT: formData.student_GOT || null,
+        intake_session: formData.intake_session || null
       };
-
-      // Only update the profile, don't try to update global user state
       await api.updateProfile(user.student_id, updatePayload);
       setIsEditing(false);
-      alert("Profile updated successfully!");
+      alert("Profile Saved!");
     } catch (error) {
-      console.error("Save error:", error);
-      alert(error.message || "Cannot connect to server.");
+      alert("Update failed.");
     }
   };
 
   return (
-    <div className="dashboard-wrapper">
-      <div className="dashboard-content">
-        <h2 className="dashboard-title">Student Profile</h2>
-        
-        <div className="profile-main-grid">
-          {/* LEFT COLUMN */}
-          <div className="profile-left-column">
-            <div className="glass-card profile-avatar-card">
-              <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
-              
-              <div 
-                className="profile-image-wrapper" 
-                style={{ cursor: isEditing ? 'pointer' : 'default' }}
-                onClick={() => isEditing && fileInputRef.current.click()}
-              >
-                <img 
-                  src={formData.student_image} 
-                  className="profile-img" 
-                  onError={(e) => { e.target.src = defaultAvatar; }} 
-                  alt="Profile"
-                />
-                {isEditing && (
-                  <div className="profile-camera-overlay">
-                    <FaCamera size={24} color="#fff" />
-                    <span style={{ fontSize: '10px', color: '#fff', marginTop: '5px' }}>Change Photo</span>
-                  </div>
-                )}
-              </div>
-              
-              {isEditing ? (
-                <input 
-                  className="profile-edit-input-center" 
-                  value={formData.student_name} 
-                  onChange={(e) => setFormData({ ...formData, student_name: e.target.value })} 
-                />
-              ) : (
-                <h3 className="profile-user-name">{formData.student_name || "Loading..."}</h3>
+    <div className="course-container">
+      <h2 className="title-text">User Profile</h2>
+      
+      <div className="profile-main-grid">
+        {/* LEFT COLUMN - Avatar & Mini Stats */}
+        <div className="profile-left-column">
+          <div className="profile-avatar-card">
+            <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
+            <div 
+              className="profile-image-wrapper" 
+              style={{ cursor: isEditing ? 'pointer' : 'default' }}
+              onClick={() => isEditing && fileInputRef.current.click()}
+            >
+              <img src={formData.student_image} className="profile-img" alt="Profile" />
+              {isEditing && (
+                <div className="profile-camera-overlay">
+                  <FaCamera size={24} />
+                  <span style={{fontSize: '10px', marginTop: '5px'}}>Change</span>
+                </div>
               )}
             </div>
-
-            <div className="profile-stats-row">
-              <div className="glass-card profile-stat-mini-card">
-                <label className="profile-label">🎓 CGPA</label>
-                <p className="profile-stat-value">{formData.cgpa}</p>
-              </div>
-              <div className="glass-card profile-stat-mini-card">
-                <label className="profile-label">📘 Courses Completed</label>
-                <p className="profile-stat-value">{formData.credits}</p>
-              </div>
-            </div>
-            <hr style={{ border: 'none', height: '1px', background: 'rgba(255,255,255,0.15)', marginTop: '10px' }} />
+            
+            {isEditing ? (
+              <input 
+                className="profile-edit-input-center" 
+                value={formData.student_name} 
+                onChange={(e) => setFormData({ ...formData, student_name: e.target.value })} 
+              />
+            ) : (
+              <h3 className="profile-user-name">{formData.student_name || "Loading..."}</h3>
+            )}
           </div>
 
-          {/* RIGHT COLUMN */}
-          <div className="glass-card profile-details-card">
-            <h4 className="profile-section-title">Profile Details</h4>
-            
-            <div className="profile-info-list">
-              <div className="profile-info-item">
-                <div className="profile-icon-circle"><FaEnvelope /></div>
-                <div>
-                  <label className="profile-label">Email Address</label>
-                  <p className="profile-value">{formData.student_email}</p>
-                </div>
-              </div>
+          <div className="profile-stats-row">
+            <div className="profile-stat-mini-card">
+              <label className="profile-label">Current CGPA</label>
+              <p className="profile-stat-value">{formData.cgpa}</p>
+            </div>
+            <div className="profile-stat-mini-card">
+              <label className="profile-label">Completed</label>
+              <p className="profile-stat-value">{formData.credits}</p>
+            </div>
+          </div>
+        </div>
 
-              <div className="profile-info-item">
-                <div className="profile-icon-circle"><FaCalendarAlt /></div>
-                <div style={{ flex: 1 }}>
-                  <label className="profile-label">Intake Session</label>
-                  {isEditing ? (
-                    <input 
-                      type="date" 
-                      className="profile-date-input" 
-                      value={formData.intake_session} 
-                      onChange={(e) => setFormData({ ...formData, intake_session: e.target.value })} 
-                    />
-                  ) : (
-                    <p className="profile-value">{formData.intake_session || "Not Set"}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="profile-info-item">
-                <div className="profile-icon-circle"><FaCheck /></div>
-                <div style={{ flex: 1 }}>
-                  <label className="profile-label">Expected Graduation (GOT)</label>
-                  {isEditing ? (
-                    <input 
-                      type="date" 
-                      className="profile-date-input" 
-                      value={formData.student_GOT} 
-                      onChange={(e) => setFormData({ ...formData, student_GOT: e.target.value })} 
-                    />
-                  ) : (
-                    <p className="profile-value">{formData.student_GOT || "Not Set"}</p>
-                  )}
-                </div>
+        {/* RIGHT COLUMN - Main Details */}
+        <div className="profile-details-card">
+          <h4 className="profile-section-title">Academic Details</h4>
+          
+          <div className="profile-info-list">
+            <div className="profile-info-item">
+              <div className="profile-icon-circle"><FaIdBadge /></div>
+              <div>
+                <label className="profile-label">Student ID</label>
+                <p className="profile-value">{formData.student_id}</p>
               </div>
             </div>
 
-            <div className="profile-button-group">
-              {isEditing ? (
-                <>
-                  <button onClick={handleSave} className="profile-save-btn"><FaCheck /> Save Changes</button>
-                  <button onClick={() => setIsEditing(false)} className="profile-cancel-btn">Cancel</button>
-                </>
-              ) : (
-                <button onClick={() => setIsEditing(true)} className="profile-edit-btn">Edit Profile</button>
-              )}
+            <div className="profile-info-item">
+              <div className="profile-icon-circle"><FaEnvelope /></div>
+              <div>
+                <label className="profile-label">Official Email</label>
+                <p className="profile-value">{formData.student_email}</p>
+              </div>
             </div>
+
+            <div className="profile-info-item">
+              <div className="profile-icon-circle"><FaCalendarAlt /></div>
+              <div style={{ flex: 1 }}>
+                <label className="profile-label">Intake Session</label>
+                {isEditing ? (
+                  <input type="date" className="profile-date-input" style={{width: '100%'}} value={formData.intake_session} onChange={(e) => setFormData({ ...formData, intake_session: e.target.value })} />
+                ) : (
+                  <p className="profile-value">{formData.intake_session || "Not Set"}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="profile-info-item">
+              <div className="profile-icon-circle"><FaCheck /></div>
+              <div style={{ flex: 1 }}>
+                <label className="profile-label">Expected Graduation</label>
+                {isEditing ? (
+                  <input type="date" className="profile-date-input" style={{width: '100%'}} value={formData.student_GOT} onChange={(e) => setFormData({ ...formData, student_GOT: e.target.value })} />
+                ) : (
+                  <p className="profile-value">{formData.student_GOT || "Not Set"}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="profile-button-group">
+            {isEditing ? (
+              <>
+                <button onClick={handleSave} className="profile-save-btn">Save Changes</button>
+                <button onClick={() => setIsEditing(false)} className="profile-edit-btn" style={{background: 'none'}}>Cancel</button>
+              </>
+            ) : (
+              <button onClick={() => setIsEditing(true)} className="profile-edit-btn">Edit Profile</button>
+            )}
           </div>
         </div>
       </div>

@@ -49,6 +49,10 @@ loginWithGoogle: async () => {
   // --- DASHBOARD ---
   getCourseSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
   getCourseList: (studentId) => fetchAPI(`/student_course/get/${studentId}`),
+  getCourseSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
+  getCourseList: (studentId) => fetchAPI(`/student_course/get/${studentId}`),
+  getPlannedCourse: (studentId) => fetchAPI(`/student_course/PlannedCourse/${studentId}`),
+  getCurrentCourse: (studentId) => fetchAPI(`/student_course/CurrentCourse/${studentId}`),
 
   // --- STUDY PLAN ---
   getStudentPlan: (studentId) => fetchAPI(`/student_course/get/${studentId}`),

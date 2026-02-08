@@ -1,0 +1,135 @@
+// CoursePool.jsx - FIXED VERSION
+import React from 'react';
+import { FaSearch } from 'react-icons/fa';
+import './StudyPlan.css';
+
+const CoursePool = ({
+  searchQuery,
+  setSearchQuery,
+  activeMainTab,
+  setActiveMainTab,
+  activeSubTab,
+  setActiveSubTab,
+  curriculumPool,
+  expandedSem,
+  setExpandedSem,
+  handleAddCourse,
+  fetchPool
+}) => {
+  const handleTabClick = (tab) => {
+    setActiveSubTab(tab);
+    fetchPool(tab);
+  };
+
+  // Add this function to handle drag start
+  const handleDragStart = (e, course) => {
+    e.dataTransfer.setData("course", JSON.stringify(course));
+  };
+
+  return (
+    <div className="glass-card pool-card">
+      <div className="search-box">
+        <FaSearch className="search-icon" />
+        <input 
+          type="text" 
+          placeholder="Search..." 
+          className="search-input" 
+          value={searchQuery} 
+          onChange={(e) => setSearchQuery(e.target.value)} 
+        />
+      </div>
+      
+      <div className="course-type-toggle-group">
+        <button 
+          className={`course-type-tab ${activeMainTab === 'core' ? 'active' : ''}`}
+          onClick={() => setActiveMainTab('core')}
+        >
+          General Pathway
+        </button>
+        <button 
+          className={`course-type-tab ${activeMainTab === 'spec' ? 'active' : ''}`}
+          onClick={() => setActiveMainTab('spec')}
+        >
+          Core Specialisation
+        </button>
+      </div>
+      
+      {activeMainTab === 'core' && (
+        <div className="sub-tabs">
+          {['All','NR','UR','CC','CD'].map(sub => (
+            <button 
+              key={sub}
+              className={`sub-tab ${activeSubTab === sub ? 'active' : ''}`}
+              onClick={() => handleTabClick(sub)}
+            >
+              {sub}
+            </button>
+          ))}
+        </div>
+      )}
+      
+      {activeMainTab === 'spec' && (
+        <div className="sub-tabs">
+          {['Offshore','Environmental','Sustainability','Renewable Energy'].map(sub => (
+            <button 
+              key={sub}
+              className={`sub-tab ${activeSubTab === sub ? 'active' : ''}`}
+              onClick={() => handleTabClick(sub)}
+            >
+              {sub}
+            </button>
+          ))}
+        </div>
+      )}
+      
+      <div className="pool-list-fixed">
+        {Object.keys(curriculumPool).length > 0 ? (
+          Object.keys(curriculumPool)
+            .sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0))
+            .map(sem => (
+              <div key={sem} style={{ marginBottom: '10px' }}>
+                <div 
+                  className="semester-header-label clickable" 
+                  onClick={() => setExpandedSem(expandedSem === sem ? null : sem)} 
+                  style={{ background: expandedSem === sem ? 'rgba(129, 199, 132, 0.1)' : 'rgba(255,255,255,0.03)' }}
+                >
+                  <span style={{ fontWeight: 'bold' }}>Semester {sem}</span>
+                  <span>{expandedSem === sem ? '−' : '+'}</span>
+                </div>
+                
+                {expandedSem === sem && (
+                  <div className="semester-courses">
+                    {curriculumPool[sem]
+                      .filter(c => 
+                        c.course_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        c.course_code?.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .map(course => (
+                        <div 
+                          key={course.course_code} 
+                          draggable 
+                          onDragStart={(e) => handleDragStart(e, course)}
+                          onClick={() => handleAddCourse(course)}
+                          className="draggable-item"
+                        >
+                          <div className="course-code">{course.course_code}</div>
+                          <div style={{fontSize: '13px', color: 'var(--text-main)'}}>{course.course_name}</div>
+                          <div style={{fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px'}}>
+                             {course.credit_hour} Credits • Pre: {course.pre_requisite || 'None'}
+                          </div>
+                        </div>
+                      ))
+                    }
+                  </div>
+                )}
+              </div>
+            ))
+        ) : (
+          <div className="empty-state">Select a category or semester</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CoursePool;
