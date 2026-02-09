@@ -151,11 +151,9 @@ function Profile({ user }) {
               <div className="profile-icon-circle"><FaCheck /></div>
               <div style={{ flex: 1 }}>
                 <label className="profile-label">Expected Graduation</label>
-                {isEditing ? (
-                  <input type="date" className="profile-date-input" style={{width: '100%'}} value={formData.student_GOT} onChange={(e) => setFormData({ ...formData, student_GOT: e.target.value })} />
-                ) : (
+               
                   <p className="profile-value">{formData.student_GOT || "Not Set"}</p>
-                )}
+                
               </div>
             </div>
           </div>

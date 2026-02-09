@@ -1,4 +1,4 @@
-// StudyPlan.jsx - FIXED VERSION (only add the missing destructuring)
+// StudyPlan.jsx - Only add creditLimit to SemesterBuilder props
 import React from 'react';
 import { 
   FaChevronLeft, FaEdit, FaTrash, FaExclamationTriangle, 
@@ -48,7 +48,7 @@ function StudyPlan({ user }) {
     setExpandedSem,
     creditLimitError,
     setCreditLimitError,
-    creditLimits,
+    creditLimit, // Get creditLimit from hook
     
     // Functions
     gradeOptions,
@@ -62,20 +62,9 @@ function StudyPlan({ user }) {
     getMaxCreditsDisplay,
     isExceedingLimit,
     getCleanPrereq,
-    // Add the missing function here
-    fetchCreditLimitForSemester  // ADD THIS LINE
+    getGradeColor,
+    fetchCreditLimitFromSummary
   } = useStudyPlan(user);
-
-  // Remove the duplicate function that doesn't exist
-  // const updateCreditLimitForSemester = () => {}; // Remove this line
-
-  // Add this back since it's missing from useStudyPlan hook
-  const getGradeColor = (grade) => {
-    const map = {
-      'A': '#4CAF50', 'B': '#CDDC39', 'C': '#FF9800', 'D': '#FF5722', 'F': '#F44336'
-    };
-    return map[grade?.charAt(0)] || '#888';
-  };
 
   // Add missing handleDeleteSemester function
   const handleDeleteSemester = async () => {
@@ -302,7 +291,8 @@ function StudyPlan({ user }) {
               isExceedingLimit={isExceedingLimit}
               gradeOptions={gradeOptions}
               savedSemesters={savedSemesters}
-              fetchCreditLimitForSemester={fetchCreditLimitForSemester}
+              // ADD THIS LINE:
+              creditLimit={creditLimit}
             />
             
             <CoursePool 

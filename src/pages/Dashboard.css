@@ -1,231 +1,415 @@
-/* ============================================================
-   BASE STYLING (YOUR ORIGINAL DARK MODE CODE)
-   ============================================================ */
-
-/* --- LAYOUT & CONTAINER --- */
 .dashboard-wrapper {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-
-  padding: 20px;
-  max-width: 1050px;
+  padding: 2rem;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
 .dashboard-title {
-  font-family: 'Inter', sans-serif;
+  font-size: 2rem;
   font-weight: 900;
-  font-size: 1.6rem;
-  margin: 0; 
-  color: var(--text-main);
+  color: #1e293b;
+  margin-bottom: 2rem;
   text-transform: uppercase;
 }
 
-.dashboard-gap {
-  height: 20px;
-  width: 100%;
+[data-theme="dark"] .dashboard-title {
+  color: #f1f5f9;
 }
 
-.layout-container {
+/* Stats Grid - Shorter Cards */
+.stats-grid {
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
-  gap: 20px;
-  align-items: stretch; 
-}
-
-/* --- LEFT SIDE: METRIC CARDS --- */
-.metrics-side {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Shorter width */
+  gap: 1.5rem; /* Reduced gap */
+  margin-bottom: 2.5rem;
+  margin-top: 15px;
 }
 
 .stat-card {
-  background: var(--bg-card);
-  border: 4px solid #111827;
-  border-radius: 25px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 15px;
-  text-align: center;
-}
-
-.stat-card .stat-label {
-  color: var(--text-main);
-  font-weight: 900;
-  font-size: 0.8rem;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-}
-
-.stat-card .stat-value {
-  color: var(--text-main);
-  font-weight: 950;
-  font-size: 1.8rem;
-}
-
-/* --- CLICKED STATE --- */
-.active-click {
-  background: #4b6e95 !important;
-}
-
-.clickable {
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.clickable:hover {
-  transform: scale(1.02);
-}
-
-/* --- RIGHT SIDE: CONTENT --- */
-.content-side {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.got-container {
-  background: var(--bg-card);
-  border: 4px solid #111827;
-  border-radius: 25px;
-  padding: 15px 30px;
-  min-height: 90px;
+  background: #ffffff;
+  border-radius: 16px; /* Slightly smaller radius */
+  padding: 1.75rem 1.25rem; /* Reduced padding */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  min-height: 120px; /* Reduced height */
   display: flex;
   flex-direction: column;
   justify-content: center;
-}
-
-.white-text { 
-  color: var(--text-main) !important; 
-  font-weight: 900; 
-  text-transform: uppercase;
-  font-size: 0.85rem;
-}
-
-.got-progress-track {
-  width: 100%;
-  height: 14px;
-  background: white;
-  border-radius: 10px;
-  margin-top: 8px;
-  border: 2px solid #111827;
+  position: relative;
   overflow: hidden;
+  border: 3px solid #1e293b;
 }
 
-.got-progress-fill {
+[data-theme="dark"] .stat-card {
+  background: #1f2937;
+  border: 3px solid #6b7280; /* Darker grey border for dark mode */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px); /* Reduced hover effect */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Active stat card */
+.stat-card.active-stat {
+  background: #1800ad;
+  border-color: #acbfd4;
+}
+
+[data-theme="dark"] .stat-card.active-stat {
+  background: #60a5fa;
+  border-color: #60a5fa;
+}
+
+
+
+.stat-card.active-stat .stat-label,
+.stat-card.active-stat .stat-value {
+  color: white;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.8rem; /* Slightly smaller */
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 1px; /* Reduced spacing */
+  margin-bottom: 0.5rem; /* Reduced margin */
+}
+
+[data-theme="dark"] .stat-label {
+  color: #94a3b8;
+}
+
+.stat-value {
+  font-size: 2.25rem; /* Smaller font */
+  font-weight: 1000;
+  color: #1e293b;
+  line-height: 1;
+}
+
+[data-theme="dark"] .stat-value {
+  color: #f1f5f9;
+}
+
+/* Progress Bar Section - Smaller */
+.progress-section {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 2px solid #1e293b;
+}
+
+[data-theme="dark"] .progress-section {
+  background: #1f2937;
+  border: 2px solid #6b7280; /* Darker grey border */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.progress-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .progress-title {
+  color: #f1f5f9;
+}
+
+.progress-subtitle {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .progress-subtitle {
+  color: #94a3b8;
+}
+
+.progress-percentage {
+  text-align: right;
+}
+
+.percentage-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 1000;
+  color: #3b82f6;
+  line-height: 1;
+}
+
+/* Progress Bar - Smaller */
+.progress-bar-container {
+  margin-top: 1rem;
+}
+
+.progress-bar-track {
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  border: 1px solid #94a3b8;
+}
+
+[data-theme="dark"] .progress-bar-track {
+  background: #374151;
+  border: 1px solid #6b7280; /* Darker grey border */
+}
+
+.progress-bar-fill {
   height: 100%;
-  background: #a5d6a7;
-  border-radius: 8px;
+  border-radius: 6px;
+  transition: width 0.5s ease;
 }
 
-/* --- TABLE SECTION --- */
-.table-container {
-  background: #4b6e95;
-  border: 4px solid #111827;
-  border-radius: 30px;
-  padding: 20px;
-  flex-grow: 1;
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .progress-labels {
+  color: #94a3b8;
+}
+
+/* Tabs with prominent borders */
+.tab-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+  padding: 10px 24px; /* Smaller padding */
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1e293b;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.85rem; /* Smaller font */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 2px solid #1e293b;
+}
+
+[data-theme="dark"] .tab-btn {
+  background: #1f2937;
+  color: #f1f5f9;
+  border: 2px solid #6b7280; /* Darker grey border */
+}
+
+.tab-btn.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .tab-btn.active {
+  background: #60a5fa;
+  border-color: #60a5fa;
+}
+
+/* Course Table Section with prominent border */
+.course-section {
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 2px solid #1e293b;
+}
+
+[data-theme="dark"] .course-section {
+  background: #1f2937;
+  border: 2px solid #6b7280; /* Darker grey border */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
 .course-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 8px;
+  border-collapse: collapse;
 }
 
 .course-table th {
-  text-align: left;
-  padding: 8px 15px;
-  font-weight: 950;
-  color: var(--text-main);
-  text-transform: uppercase;
-  font-size: 0.75rem;
-}
-
-/* 🔧 CHANGE 1: REMOVE ROW LINES */
-.course-table td {
-  background: #acbfd4;
-  padding: 12px 15px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--text-main);
-  border: none;
-}
-
-.course-table td:first-child {
-  border-radius: 12px 0 0 12px;
-}
-
-.course-table td:last-child {
-  border-radius: 0 12px 12px 0;
-}
-
-.status-tag {
-  padding: 3px 10px;
-  background: #111827;
+  background: #3b82f6;
   color: white;
-  border-radius: 6px;
-  font-size: 0.65rem;
+  text-align: left;
+  padding: 1.25rem; /* Reduced padding */
   font-weight: 800;
+  font-size: 0.85rem; /* Smaller font */
+  text-transform: uppercase;
+  letter-spacing: 0.5px; /* Reduced spacing */
 }
 
-/* ============================================================
-   DARK MODE OVERRIDE (ONLY WHAT YOU ASKED)
-   ============================================================ */
+[data-theme="dark"] .course-table th {
+  background: #60a5fa;
+}
 
-/* 🔧 CHANGE 2: DARK MODE TABLE TEXT BLACK */
-[data-theme="dark"] .course-table th,
+.course-table td {
+  padding: 1.25rem; /* Reduced padding */
+  border-bottom: 1px solid #e5e7eb;
+  color: #1e293b;
+  font-weight: 500;
+  font-size: 0.9rem; /* Smaller font */
+}
+
 [data-theme="dark"] .course-table td {
-  color: #000000;
+  color: #f1f5f9;
+  border-bottom: 1px solid #374151;
 }
 
-/* ============================================================
-   LIGHT MODE OVERRIDES (YOUR SPECIFIC REQUESTS)
-   ============================================================ */
-
-[data-theme="light"] .dashboard-title {
-  color: #111827;
+.course-table tr:last-child td {
+  border-bottom: none;
 }
 
-/* Cards and GOT container */
-[data-theme="light"] .stat-card,
-[data-theme="light"] .got-container {
-  background: #034a84;
+.course-table tr:hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
-/* Font white when not clicked */
-[data-theme="light"] .stat-card .stat-label,
-[data-theme="light"] .stat-card .stat-value,
-[data-theme="light"] .white-text {
-  color: #ffffff;
+[data-theme="dark"] .course-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* Clicked card */
-[data-theme="light"] .active-click {
-  background: #acbfd4 !important;
+/* Status Badge */
+.status-badge {
+  padding: 5px 12px; /* Smaller padding */
+  border-radius: 20px;
+  font-size: 0.7rem; /* Smaller font */
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid currentColor;
 }
 
-/* Font black when clicked */
-[data-theme="light"] .active-click .stat-label,
-[data-theme="light"] .active-click .stat-value {
-  color: #000000 !important;
+.status-badge.planned {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+  border-color: rgba(255, 193, 7, 0.3);
 }
 
-/* Table background */
-[data-theme="light"] .table-container {
-  background: #acbfd4;
+.status-badge.current {
+  background: rgba(33, 150, 243, 0.15);
+  color: #2196f3;
+  border-color: rgba(33, 150, 243, 0.3);
 }
 
-[data-theme="light"] .course-table th {
-  color: #111827;
+.status-badge.completed {
+  background: rgba(76, 175, 80, 0.15);
+  color: #4caf50;
+  border-color: rgba(76, 175, 80, 0.3);
 }
 
-[data-theme="light"] .course-table td {
-  background: rgba(255, 255, 255, 0.4);
-  color: #111827;
+/* Skeleton Loading */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 16px;
+}
+
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%);
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-wrapper {
+    padding: 1.5rem;
+  }
+  
+  .dashboard-title {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .stat-card {
+    padding: 1.5rem 1rem;
+    min-height: 110px;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+  }
+  
+  .progress-section {
+    padding: 1.25rem;
+  }
+  
+  .progress-title {
+    font-size: 1rem;
+  }
+  
+  .percentage-value {
+    font-size: 1.75rem;
+  }
+  
+  .tab-container {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .tab-btn {
+    width: 100%;
+    padding: 12px 20px;
+    text-align: center;
+  }
+  
+  .course-table th,
+  .course-table td {
+    padding: 1rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-wrapper {
+    padding: 1rem;
+  }
+  
+  .dashboard-title {
+    font-size: 1.5rem;
+  }
+  
+  .stat-value {
+    font-size: 1.75rem;
+  }
+  
+  .progress-labels span {
+    font-size: 0.65rem;
+  }
 }

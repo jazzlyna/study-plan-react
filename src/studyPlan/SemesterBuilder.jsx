@@ -1,5 +1,5 @@
 // SemesterBuilder.jsx - UPDATED with credit limit fix
-import React, { useEffect } from 'react';
+import React from 'react';
 import { FaTrash } from 'react-icons/fa';
 import './StudyPlan.css';
 
@@ -22,7 +22,7 @@ const SemesterBuilder = ({
   isExceedingLimit,
   gradeOptions,
   savedSemesters,
-  fetchCreditLimitForSemester // ADD THIS PROPS
+  creditLimit // ADD THIS PROPS - use it directly
 }) => {
   const handleDrop = (e) => {
     setIsDraggingOver(false);
@@ -32,15 +32,8 @@ const SemesterBuilder = ({
 
   const targetSemester = isEditing ? selectedSem?.number : savedSemesters.length + 1;
   const currentCredits = calculateCurrentCredits();
-  const maxLimit = getMaxCreditsDisplay(targetSemester);
+  const maxLimit = creditLimit; // Use creditLimit directly instead of getMaxCreditsDisplay
   const creditLimitExceeded = isExceedingLimit(currentCredits, targetSemester);
-
-  // ADD THIS useEffect to fetch limit if not available
-  useEffect(() => {
-    if (targetSemester && !maxLimit && fetchCreditLimitForSemester) {
-      fetchCreditLimitForSemester(targetSemester);
-    }
-  }, [targetSemester, maxLimit, fetchCreditLimitForSemester]);
 
   return (
     <div 
