@@ -7,6 +7,9 @@ import './Profile.css';
 function Profile({ user }) {
   const fileInputRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
+  // State to hold the specialized graduation analysis data
+  const [gotAnalysis, setGotAnalysis] = useState(null);
+  
   const [formData, setFormData] = useState({
     student_id: "",
     student_name: "",
@@ -22,9 +25,11 @@ function Profile({ user }) {
     const fetchAllData = async () => {
       if (!user?.student_id) return;
       try {
-        const [profileData, summaryData] = await Promise.all([
+        // Added api.getGraduateOnTime to the concurrent requests
+        const [profileData, summaryData, gotResponse] = await Promise.all([
           api.getProfile(user.student_id),
-          api.getCourseSummary(user.student_id)
+          api.getCourseSummary(user.student_id),
+          api.getGraduateOnTime(user.student_id)
         ]);
 
         setFormData({
@@ -37,6 +42,11 @@ function Profile({ user }) {
           cgpa: summaryData.student_cgpa?.toFixed(2) || "0.00",
           credits: summaryData.count_completed_course || "0"
         });
+
+        // Store the GOT analysis if successful
+        if (gotResponse && gotResponse.success) {
+          setGotAnalysis(gotResponse.analysis);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -112,6 +122,17 @@ function Profile({ user }) {
               <p className="profile-stat-value">{formData.credits}</p>
             </div>
           </div>
+
+          {/* Optional: Add Progress Bar here if desired, using gotAnalysis.progress_percentage */}
+          {gotAnalysis && (
+            <div className="profile-stat-mini-card" style={{ gridColumn: 'span 2' }}>
+              <label className="profile-label">Degree Progress</label>
+              <div style={{ width: '100%', height: '8px', background: '#eee', borderRadius: '4px', marginTop: '10px', overflow: 'hidden', border: '1px solid #000' }}>
+                <div style={{ width: `${gotAnalysis.progress_percentage}%`, height: '100%', background: '#00427c' }}></div>
+              </div>
+              <p style={{ fontSize: '12px', fontWeight: 'bold', marginTop: '5px' }}>{gotAnalysis.progress_percentage}%</p>
+            </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN - Main Details */}
@@ -119,18 +140,11 @@ function Profile({ user }) {
           <h4 className="profile-section-title">Student Details</h4>
           
           <div className="profile-info-list">
-            <div className="profile-info-item">
-              <div className="profile-icon-circle"><FaIdBadge /></div>
-              <div>
-                <label className="profile-label">Student ID</label>
-                <p className="profile-value">{formData.student_id}</p>
-              </div>
-            </div>
-
+            
             <div className="profile-info-item">
               <div className="profile-icon-circle"><FaEnvelope /></div>
               <div>
-                <label className="profile-label">Official Email</label>
+                <label className="profile-label">User Email</label>
                 <p className="profile-value">{formData.student_email}</p>
               </div>
             </div>
@@ -151,9 +165,30 @@ function Profile({ user }) {
               <div className="profile-icon-circle"><FaCheck /></div>
               <div style={{ flex: 1 }}>
                 <label className="profile-label">Expected Graduation</label>
-               
-                  <p className="profile-value">{formData.student_GOT || "Not Set"}</p>
-                
+                <div className="profile-value">
+                  {/* Displaying GOT analysis data */}
+                  {gotAnalysis ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ color: gotAnalysis.extra_semesters > 0 ? '#d32f2f' : 'inherit' }}>
+                        {gotAnalysis.graduate_on_time_date}
+                      </span>
+                      {gotAnalysis.extra_semesters > 0 && (
+                        <span style={{ 
+                          fontSize: '10px', 
+                          padding: '2px 8px', 
+                          background: '#000', 
+                          color: '#fff', 
+                          borderRadius: '4px',
+                          textTransform: 'uppercase'
+                        }}>
+                          +{gotAnalysis.extra_semesters} Sem Delay
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="profile-value">{formData.student_GOT || "Not Set"}</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>

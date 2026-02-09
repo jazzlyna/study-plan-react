@@ -60,3 +60,79 @@ body::before {
   opacity: var(--bg-opacity); /* Applies your 0.1 transparency */
   pointer-events: none; /* Ensures the layer doesn't block mouse clicks */
 }
+
+/* Intake Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: #1e1e1e; /* Adjust based on your theme variables if needed */
+  padding: 2.5rem;
+  border-radius: 12px;
+  max-width: 450px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.intake-date-input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #2a2a2a;
+  color: white;
+  font-size: 1rem;
+}
+
+.intake-submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: #1800ad;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.intake-submit-btn:hover {
+  background: #4546a0;
+}
+
+/* Add this to your global CSS file (App.css, index.css, or styles.css) */
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#root, .app, .main-container {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Target the specific dashboard route */
+div[class*="dashboard"], 
+div[class*="Dashboard"] {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* If you have a main content area */
+.main-content, .content-area {
+  padding-top: 0 !important;
+}

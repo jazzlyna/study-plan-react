@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { api } from "../utils/api";
 import "./Dashboard.css";
 
@@ -6,9 +6,36 @@ function Dashboard({ user }) {
   const [plannedCourses, setPlannedCourses] = useState([]);
   const [currentCourses, setCurrentCourses] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [graduateOnTime, setGraduateOnTime] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("current");
   const [isMobile, setIsMobile] = useState(false);
+  const [hoveredStat, setHoveredStat] = useState(null);
+  const [particles, setParticles] = useState([]);
+  const containerRef = useRef(null);
+
+  // Create floating particles
+  useEffect(() => {
+    const createParticles = () => {
+      const newParticles = [];
+      const particleCount = isMobile ? 20 : 50;
+      
+      for (let i = 0; i < particleCount; i++) {
+        newParticles.push({
+          id: i,
+          size: Math.random() * 4 + 1,
+          x: Math.random() * 100,
+          y: Math.random() * 100,
+          duration: Math.random() * 30 + 20,
+          delay: Math.random() * 5
+        });
+      }
+      
+      setParticles(newParticles);
+    };
+    
+    createParticles();
+  }, [isMobile]);
 
   // Detect mobile screen
   useEffect(() => {
@@ -29,8 +56,14 @@ function Dashboard({ user }) {
       try {
         setLoading(true);
         
-        const summaryData = await api.getCourseSummary(user.student_id);
+        // Fetch all data in parallel for better performance
+        const [summaryData, graduateOnTimeData] = await Promise.all([
+          api.getCourseSummary(user.student_id),
+          api.getGraduateOnTime(user.student_id)
+        ]);
+        
         setSummary(summaryData);
+        setGraduateOnTime(graduateOnTimeData);
         
         try {
           const [plannedData, currentData] = await Promise.all([
@@ -68,15 +101,38 @@ function Dashboard({ user }) {
   const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
   
   const displayCourses = activeTab === "planned" ? plannedCourses : currentCourses;
-  const tableTitle = activeTab === "planned" ? "Planned Courses" : "In Progress Courses";
   
-  // Calculate GOT percentage
-  const gotPercentage = user?.student_GOT || 65;
-  const gotColor = gotPercentage >= 80 ? "#4CAF50" : gotPercentage >= 60 ? "#FF9800" : "#F44336";
+  // Calculate GOT percentage from API response
+  const gotPercentage = graduateOnTime?.analysis?.progress_percentage || 0;
+  const getGotColor = (percentage) => {
+    if (percentage >= 80) return { main: "#4CAF50", glow: "rgba(76, 175, 80, 0.5)" };
+    if (percentage >= 60) return { main: "#FF9800", glow: "rgba(255, 152, 0, 0.5)" };
+    return { main: "#F44336", glow: "rgba(244, 67, 54, 0.5)" };
+  };
+  
+  const gotColor = getGotColor(gotPercentage);
 
   if (loading) {
     return (
-      <div className="dashboard-wrapper">
+      <div className="dashboard-wrapper" ref={containerRef}>
+        {/* Floating Particles */}
+        <div className="particles-container">
+          {particles.map(particle => (
+            <div
+              key={particle.id}
+              className="particle"
+              style={{
+                width: `${particle.size}px`,
+                height: `${particle.size}px`,
+                left: `${particle.x}%`,
+                top: `${particle.y}%`,
+                animationDuration: `${particle.duration}s`,
+                animationDelay: `${particle.delay}s`
+              }}
+            />
+          ))}
+        </div>
+        
         <h2 className="dashboard-title">
           {greeting}, {user?.student_name || "Student"}
         </h2>
@@ -87,13 +143,31 @@ function Dashboard({ user }) {
           ))}
         </div>
         
-        <div className="progress-section skeleton" style={{ height: "150px", marginBottom: "2rem" }}></div>
+        <div className="progress-section skeleton" style={{ height: "180px", marginBottom: "2rem" }}></div>
       </div>
     );
   }
 
   return (
-    <div className="dashboard-wrapper">
+    <div className="dashboard-wrapper" ref={containerRef}>
+      {/* Floating Particles */}
+      <div className="particles-container">
+        {particles.map(particle => (
+          <div
+            key={particle.id}
+            className="particle"
+            style={{
+              width: `${particle.size}px`,
+              height: `${particle.size}px`,
+              left: `${particle.x}%`,
+              top: `${particle.y}%`,
+              animationDuration: `${particle.duration}s`,
+              animationDelay: `${particle.delay}s`
+            }}
+          />
+        ))}
+      </div>
+      
       <h2 className="dashboard-title">
         {greeting}, {user?.student_name || "Student"}
       </h2>
@@ -104,6 +178,8 @@ function Dashboard({ user }) {
         <div 
           className={`stat-card ${activeTab === "planned" ? "active-stat" : ""}`}
           onClick={() => setActiveTab("planned")}
+          onMouseEnter={() => setHoveredStat("planned")}
+          onMouseLeave={() => setHoveredStat(null)}
           style={{ cursor: 'pointer' }}
         >
           <span className="stat-label">Planned Courses</span>
@@ -114,6 +190,8 @@ function Dashboard({ user }) {
         <div 
           className={`stat-card ${activeTab === "current" ? "active-stat" : ""}`}
           onClick={() => setActiveTab("current")}
+          onMouseEnter={() => setHoveredStat("current")}
+          onMouseLeave={() => setHoveredStat(null)}
           style={{ cursor: 'pointer' }}
         >
           <span className="stat-label">In Progress</span>
@@ -121,13 +199,19 @@ function Dashboard({ user }) {
         </div>
 
         {/* Total Credits */}
-        <div className="stat-card">
+        <div className="stat-card"
+          onMouseEnter={() => setHoveredStat("credits")}
+          onMouseLeave={() => setHoveredStat(null)}
+        >
           <span className="stat-label">Total Credits</span>
           <span className="stat-value">{summary?.total_credits || "0"}</span>
         </div>
 
         {/* Current CGPA */}
-        <div className="stat-card">
+        <div className="stat-card"
+          onMouseEnter={() => setHoveredStat("cgpa")}
+          onMouseLeave={() => setHoveredStat(null)}
+        >
           <span className="stat-label">Current CGPA</span>
           <span className="stat-value">{summary?.student_cgpa?.toFixed(2) || "0.00"}</span>
         </div>
@@ -137,12 +221,16 @@ function Dashboard({ user }) {
       <div className="progress-section">
         <div className="progress-header">
           <div>
-            <h3 className="progress-title">Graduate On Time Progress</h3>
-            <p className="progress-subtitle">Track your progress towards on-time graduation</p>
+            <h3 className="progress-title">Graduate On Time</h3>
+            <p className="progress-subtitle">
+              {graduateOnTime?.analysis?.graduate_on_time_date 
+                ? `Progress: ${gotPercentage.toFixed(1)}%` 
+                : 'Track your progress towards on-time graduation'}
+            </p>
           </div>
           <div className="progress-percentage">
-            <span className="percentage-value">{gotPercentage}%</span>
-            <span className="percentage-label">Completion</span>
+            <span className="percentage-value">{graduateOnTime.analysis.graduate_on_time_date}</span>
+            <span className="percentage-label" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Completion</span>
           </div>
         </div>
         
@@ -152,7 +240,8 @@ function Dashboard({ user }) {
               className="progress-bar-fill"
               style={{ 
                 width: `${gotPercentage}%`,
-                backgroundColor: gotColor
+                backgroundColor: gotColor.main,
+                boxShadow: `0 0 20px ${gotColor.glow}`
               }}
             ></div>
           </div>
@@ -166,24 +255,7 @@ function Dashboard({ user }) {
           </div>
         </div>
         
-        <div className="progress-status">
-          {gotPercentage >= 80 ? (
-            <div className="status-good">
-              <span className="status-icon">✓</span>
-              <span>You're on track to graduate on time!</span>
-            </div>
-          ) : gotPercentage >= 60 ? (
-            <div className="status-warning">
-              <span className="status-icon">⚠</span>
-              <span>Keep up the pace to graduate on time</span>
-            </div>
-          ) : (
-            <div className="status-danger">
-              <span className="status-icon">!</span>
-              <span>Consider reviewing your study plan</span>
-            </div>
-          )}
-        </div>
+        
       </div>
 
       {/* Tab Navigation */}
@@ -192,13 +264,15 @@ function Dashboard({ user }) {
           className={`tab-btn ${activeTab === "current" ? "active" : ""}`}
           onClick={() => setActiveTab("current")}
         >
-          In Progress Courses
+          <span>In Progress Courses</span>
+          <span className="tab-count">({currentCourses.length || summary?.count_current_course || "0"})</span>
         </button>
         <button 
           className={`tab-btn ${activeTab === "planned" ? "active" : ""}`}
           onClick={() => setActiveTab("planned")}
         >
-          Planned Courses
+          <span>Planned Courses</span>
+          <span className="tab-count">({plannedCourses.length || summary?.count_planned_course || "0"})</span>
         </button>
       </div>
 
@@ -225,13 +299,23 @@ function Dashboard({ user }) {
                     </span>
                   </td>
                   {activeTab === "current" && (
-                    <td>{course.grade || "-"}</td>
+                    <td>
+                      <span className="grade-display" style={{
+                        color: course.grade === 'A' ? '#4CAF50' : 
+                               course.grade === 'B' ? '#2196F3' : 
+                               course.grade === 'C' ? '#FF9800' : 
+                               course.grade === 'D' ? '#F44336' : '#9E9E9E',
+                        fontWeight: 'bold'
+                      }}>
+                        {course.grade || "-"}
+                      </span>
+                    </td>
                   )}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={activeTab === "current" ? 4 : 3} style={{ textAlign: 'center', padding: '2rem' }}>
+                <td colSpan={activeTab === "current" ? 4 : 3} style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255, 255, 255, 0.6)' }}>
                   No {activeTab === "planned" ? "planned" : "in progress"} courses found.
                 </td>
               </tr>

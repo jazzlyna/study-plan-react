@@ -1,10 +1,16 @@
+/* Reset margins and padding for dashboard */
 .dashboard-wrapper {
-  padding: 2rem;
+  padding: 0.5rem 2rem 2rem 2rem !important; /* Reduced top padding */
+  margin-top: 0 !important;
   max-width: 1100px;
   margin: 0 auto;
+  min-height: calc(100vh - [navbar-height]); /* Adjust if you know navbar height */
 }
 
+
 .dashboard-title {
+  margin-top: 0.5rem !important; /* Reduced from 2.5rem */
+  padding-top: 0 !important;
   font-size: 2rem;
   font-weight: 900;
   color: #1e293b;

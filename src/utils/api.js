@@ -27,17 +27,17 @@ const fetchAPI = async (endpoint, options = {}) => {
 
 export const api = {
   // --- AUTH ---
-loginWithGoogle: async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      
-      redirectTo: window.location.origin + '/Dashboard',
-    },
-  });
-  if (error) throw error;
-  return data;
-},
+  loginWithGoogle: async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/Dashboard',
+      },
+    });
+    if (error) throw error;
+    return data;
+  },
+
   // --- PROFILE ---
   getProfile: (studentId) => fetchAPI(`/student/${studentId}`),
   updateProfile: (studentId, data) =>
@@ -46,9 +46,10 @@ loginWithGoogle: async () => {
       body: JSON.stringify(data)
     }),
 
+  // --- GRADUATE ON TIME ---
+  getGraduateOnTime: (studentId) => fetchAPI(`/student/graduate-on-time/${studentId}`),
+
   // --- DASHBOARD ---
-  getCourseSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
-  getCourseList: (studentId) => fetchAPI(`/student_course/get/${studentId}`),
   getCourseSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
   getCourseList: (studentId) => fetchAPI(`/student_course/get/${studentId}`),
   getPlannedCourse: (studentId) => fetchAPI(`/student_course/PlannedCourse/${studentId}`),
@@ -60,14 +61,14 @@ loginWithGoogle: async () => {
   getSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
   getCourses: () => fetchAPI(`/course/get`),
   getPool: (endpoint) => fetchAPI(`/${endpoint}`),
-addCourse: (payload) =>
-  fetchAPI(`/student_course/add`, {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  }).then(response => {
-    // Return the full response including academic_meta
-    return response;
-  }),
+  addCourse: (payload) =>
+    fetchAPI(`/student_course/add`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }).then(response => {
+      // Return the full response including academic_meta
+      return response;
+    }),
   deleteSemester: (studentId, semNum) =>
     fetchAPI(`/student_course/delete/semester/${studentId}/${semNum}`, {
       method: 'DELETE',
@@ -83,7 +84,6 @@ addCourse: (payload) =>
   getCoreSpecializationCourses: (studentId) => fetchAPI(`/course/get/CourseAvailable/CoreSpecialization/${studentId}`),
 
   // --- MY COURSE ---
-  // Add these to your api object in api.js
   getAllNational: () => fetchAPI(`/course/get/NationalRequirement`),
   getAllUniversity: () => fetchAPI(`/course/get/UniversityRequirement`),
   getAllCommon: () => fetchAPI(`/course/get/CommonCourse`),
