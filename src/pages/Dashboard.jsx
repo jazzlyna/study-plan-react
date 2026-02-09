@@ -114,7 +114,7 @@ function Dashboard({ user }) {
 
   if (loading) {
     return (
-      <div className="dashboard-wrapper" ref={containerRef}>
+      <div className="dashboard-wrapper">
         {/* Floating Particles */}
         <div className="particles-container">
           {particles.map(particle => (
