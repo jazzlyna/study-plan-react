@@ -1,4 +1,4 @@
-// useStudyPlan.js - UPDATED VERSION (with probation-based credit limit)
+
 import { useState, useEffect, useCallback } from 'react';
 import { generatePDFReport } from '../utils/reportGenerator';
 import { api } from "../utils/api";
@@ -123,6 +123,7 @@ export const useStudyPlan = (user) => {
     await handleSaveSemester(true);
   };
 
+  // UPDATED handleSaveSemester function to use proper edit endpoint
   const handleSaveSemester = async (bypass = false) => {
     const targetSemester = parseInt(isEditing ? selectedSem.number : savedSemesters.length + 1);
     
@@ -144,6 +145,9 @@ export const useStudyPlan = (user) => {
           const hasPassed = savedSemesters.some(s => 
             s.courses.some(c => c.course_code === cleanP && c.grade && c.grade !== "" && c.grade !== "F")
           );
+
+
+
           
           if (inSame) {
             errorMsg = `Case A: [${course.course_code}] and its prerequisite [${cleanP}] are in the same semester. You need chair approval / chair approval and an attempt to [${cleanP}].`;
@@ -176,60 +180,78 @@ export const useStudyPlan = (user) => {
     setCreditLimitError(null);
     
     try {
+      // NEW LOGIC: Use proper edit endpoint when editing
       if (isEditing) {
-        await api.deleteSemester(user.student_id, targetSemester);
-      }
-      
-      const backendResponses = [];
-      let savedSuccessfully = true;
-      
-      for (const course of currentSelection) {
-        const payload = {
-          student_id: String(user.student_id).trim(),
-          course_code: String(course.course_code),
-          semester: targetSemester,
-          grade: semStatus === 'Complete' ? (course.grade || "") : "",
-          status: semStatus === 'Complete' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned')
-        };
+        // Track which courses need to be deleted (removed from selection)
+        const currentCourseCodes = currentSelection.map(c => c.course_code);
+        const coursesToDelete = selectedSem.courses.filter(
+          c => !currentCourseCodes.includes(c.course_code)
+        );
         
-        try {
-          const response = await api.addCourse(payload);
-          backendResponses.push(response);
+        // Delete courses that were removed
+        for (const courseToDelete of coursesToDelete) {
+          await api.deleteCourse(
+            user.student_id,
+            courseToDelete.course_code,
+            targetSemester
+          );
+        }
+        
+        // Update or add each course in the current selection
+        for (const course of currentSelection) {
+          const payload = {
+            course_code: String(course.course_code),
+            grade: semStatus === 'Complete' ? (course.grade || "") : "",
+            status: semStatus === 'Complete' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned'),
+            semester: targetSemester
+          };
           
-          if (response.academic_meta && response.academic_meta.limit_exceeded) {
-            if (response.academic_meta.max_limit) {
-              setCreditLimit(response.academic_meta.max_limit);
-            }
-            
-            if (!bypass) {
-              const firstIssue = response.academic_meta;
-              setCreditLimitError(
-                `Credit Limit Exceeded: You have ${firstIssue.current_total_credits} credits, ` +
-                `which exceeds the maximum allowed of ${firstIssue.max_limit} credits for this semester.`
-              );
-              savedSuccessfully = false;
-              break;
-            }
-          }
-        } catch (error) {
-          if (error.message && (error.message.includes("limit") || error.message.includes("credit") || error.message.includes("exceed"))) {
-            setCreditLimitError(`Credit Limit Error: ${error.message}`);
-            savedSuccessfully = false;
-            break;
+          // Check if this course already exists in the semester
+          const courseExistsInOriginal = selectedSem.courses.some(
+            c => c.course_code === course.course_code
+          );
+          
+          if (courseExistsInOriginal) {
+            // Update existing course
+            await api.updateStudentCourse(
+              user.student_id,
+              course.course_code,
+              targetSemester,
+              payload
+            );
           } else {
-            throw error;
+            // Add new course to the semester
+            await api.addCourse({
+              student_id: String(user.student_id).trim(),
+              course_code: String(course.course_code),
+              semester: targetSemester,
+              grade: semStatus === 'Complete' ? (course.grade || "") : "",
+              status: semStatus === 'Complete' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned')
+            });
           }
+        }
+      } else {
+        // For NEW semesters, use the existing addCourse logic
+        for (const course of currentSelection) {
+          const payload = {
+            student_id: String(user.student_id).trim(),
+            course_code: String(course.course_code),
+            semester: targetSemester,
+            grade: semStatus === 'Complete' ? (course.grade || "") : "",
+            status: semStatus === 'Complete' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned')
+          };
+          
+          await api.addCourse(payload);
         }
       }
       
-      if (savedSuccessfully) {
-        await fetchSemesterCredits();
-        await fetchUserPlan();
-        // Refresh credit limits after save
-        await fetchCreditLimitFromSummary();
-        resetForm();
-      }
+      // Refresh data after save
+      await fetchUserPlan();
+      await fetchCreditLimitFromSummary();
+      resetForm();
+      
     } catch (error) {
+      console.error("Error saving semester:", error);
       alert("System Error: " + error.message);
     } finally {
       setIsSaving(false);
@@ -332,7 +354,7 @@ export const useStudyPlan = (user) => {
 
   const fetchCourseCredits = useCallback(async () => {
     try {
-      const data = await api.getCourses();
+      const data = await api.getCourses(user?.student_id);
       if (Array.isArray(data)) {
         const map = {};
         data.forEach(c => map[c.course_code] = c.credit_hour);
@@ -341,11 +363,11 @@ export const useStudyPlan = (user) => {
     } catch (err) { 
       console.error("Error fetching course credits:", err); 
     }
-  }, []);
+  }, [user?.student_id]);
 
   const fetchPool = useCallback(async (tabName) => {
     const fetchMap = {
-      'All': () => api.getCourses(),
+      'All': () => api.getCourses(user?.student_id),
       'NR': () => api.getNationalRequirementCourses(user.student_id),
       'UR': () => api.getUniversityRequirementCourses(user.student_id),
       'CC': () => api.getCommonCourses(user.student_id),

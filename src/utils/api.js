@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -39,39 +40,62 @@ export const api = {
   },
 
   // --- PROFILE ---
-  getProfile: (studentId) => fetchAPI(`/student/${studentId}`),
-  updateProfile: (studentId, data) =>
-    fetchAPI(`/student/update/${studentId}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    }),
+getProfile: (studentId) => fetchAPI(`/student/${studentId}`),
+updateProfile: (studentId, data) =>
+  fetchAPI(`/student/update/${studentId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
 
   // --- GRADUATE ON TIME ---
   getGraduateOnTime: (studentId) => fetchAPI(`/student/graduate-on-time/${studentId}`),
 
   // --- DASHBOARD ---
+  
   getCourseSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
   getCourseList: (studentId) => fetchAPI(`/student_course/get/${studentId}`),
   getPlannedCourse: (studentId) => fetchAPI(`/student_course/PlannedCourse/${studentId}`),
   getCurrentCourse: (studentId) => fetchAPI(`/student_course/CurrentCourse/${studentId}`),
 
-  // --- STUDY PLAN ---
-  getStudentPlan: (studentId) => fetchAPI(`/student_course/get/${studentId}`),
-  getGPA: (studentId, semNum) => fetchAPI(`/student_course/GPA/${studentId}/${semNum}`),
-  getSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
-  getCourses: () => fetchAPI(`/course/get`),
-  getPool: (endpoint) => fetchAPI(`/${endpoint}`),
+  
+// --- STUDY PLAN ---
+getStudentPlan: (studentId) => fetchAPI(`/student_course/get/${studentId}`),
+getGPA: (studentId, semNum) => fetchAPI(`/student_course/GPA/${studentId}/${semNum}`),
+getSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
+
+getCourses: (studentId) => {
+  if (studentId) {
+    return fetchAPI(`/course/get/${studentId}`);
+  } else {
+    // Fallback to get all courses if no studentId
+    return fetchAPI(`/course/get/all`);
+  }
+},
+getPool: (endpoint) => fetchAPI(`/${endpoint}`),
   addCourse: (payload) =>
     fetchAPI(`/student_course/add`, {
       method: 'POST',
       body: JSON.stringify(payload)
     }).then(response => {
-      // Return the full response including academic_meta
+      
       return response;
+
     }),
   deleteSemester: (studentId, semNum) =>
     fetchAPI(`/student_course/delete/semester/${studentId}/${semNum}`, {
       method: 'DELETE',
+    }),
+
+
+  deleteCourse: (studentId, courseCode, semester) =>
+    fetchAPI(`/student_course/delete/course/${studentId}/${courseCode}/${semester}`, {
+      method: 'DELETE',
+    }),
+    
+  updateStudentCourse: (studentId, courseCode, semester, data) =>
+    fetchAPI(`/student_course/update/StudentCourse/${studentId}/${courseCode}/${semester}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
     }),
 
   getReportData: (studentId) => fetchAPI(`/report/report-data/${studentId}`),

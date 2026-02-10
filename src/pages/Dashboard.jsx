@@ -229,7 +229,7 @@ function Dashboard({ user }) {
             </p>
           </div>
           <div className="progress-percentage">
-            <span className="percentage-value">{graduateOnTime.analysis.graduate_on_time_date}</span>
+            <span className="percentage-value">{graduateOnTime.analysis.graduate_on_time_date }</span>
             <span className="percentage-label" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Completion</span>
           </div>
         </div>

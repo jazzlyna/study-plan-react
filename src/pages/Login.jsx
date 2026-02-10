@@ -1,92 +1,291 @@
-import React, { useState } from "react";
-import { api } from "../utils/api"; 
-import "./SignUpLogin.css"; 
-import logo from "../image/logo.png"; 
-import UTP from "../image/UTP.png";   
+import React, { useState, useEffect } from 'react';
+import './SignUpLogin.css';
+import { api } from '../utils/api';
+import logo from '../image/logo.png';
+import heroImage from '../image/hero-image.jpg'
 
-function Login() { 
+const LandingPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [showScrollHint, setShowScrollHint] = useState(true);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 100) {
+        setShowScrollHint(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    
+    // Auto-hide scroll hint after 5 seconds
+    const timer = setTimeout(() => {
+      setShowScrollHint(false);
+    }, 5000);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(timer);
+    };
+  }, []);
 
   const handleGoogleAuth = async (actionType) => {
     try {
       setLoading(true);
       setMessage("");
-      await api.loginWithGoogle(); 
+      await api.loginWithGoogle();
     } catch (err) {
       setMessage(`Google ${actionType} failed: ${err.message}`);
       setLoading(false);
     }
   };
 
+  const features = [
+    {
+      id: 1,
+      title: "Track Courses",
+      description: "Keep all your courses organized in one place with semester-wise tracking.",
+      icon: "📚"
+    },
+    {
+      id: 2,
+      title: "Manage Credits",
+      description: "Monitor your credit hours and ensure you're on track for graduation.",
+      icon: "🎯"
+    },
+    {
+      id: 3,
+      title: "Stay Organized",
+      description: "Never miss an assignment, exam, or important deadline again.",
+      icon: "🗓️"
+    },
+    {
+      id: 4,
+      title: "Progress Analytics",
+      description: "Visualize your academic progress with charts and insights.",
+      icon: "📊"
+    }
+  ];
+
+  const steps = [
+    {
+      id: 1,
+      title: "Sign Up",
+      description: "Create your account using your university email or Google account.",
+      icon: "👤"
+    },
+    {
+      id: 2,
+      title: "Add Your Courses",
+      description: "Input your current courses or plan future semesters.",
+      icon: "📝"
+    },
+    {
+      id: 3,
+      title: "Track & Manage",
+      description: "Monitor your progress, credits, and stay organized all semester.",
+      icon: "📈"
+    }
+  ];
+
+  const testimonials = [
+    {
+      id: 1,
+      name: "Alex Johnson",
+      role: "Computer Science Senior",
+      text: "This planner helped me stay on track for graduation. I could visualize my entire degree path!",
+      rating: "★★★★★"
+    },
+    {
+      id: 2,
+      name: "Maria Garcia",
+      role: "Engineering Student",
+      text: "Managing credits across semesters was confusing until I found this tool. Now it's a breeze!",
+      rating: "★★★★★"
+    },
+    {
+      id: 3,
+      name: "David Chen",
+      role: "Business Major",
+      text: "The clean interface and easy tracking kept me organized throughout my toughest semesters.",
+      rating: "★★★★☆"
+    }
+  ];
+
   return (
-    <div className="landing-container">
+    <div className="landing-page">
+      {/* Header with Logo and Social Media */}
       <header className="landing-header">
         <div className="logo-section">
           <img src={logo} alt="CEE Logo" className="main-logo" />
           <div className="social-icons">
-          <a href="https://www.instagram.com/cee_utp?igsh=aGI0NTIwaWJxZm1v" target="_blank" rel="noopener noreferrer">
-            <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="IG" />
-          </a>
-  
-          <a href="https://facebook.com/yourpage" target="_blank" rel="noopener noreferrer">
-            <img src="https://cdn-icons-png.flaticon.com/512/5968/5968764.png" alt="FB" />
-          </a>
-  
-          <a href="https://www.tiktok.com/@cee.utp_25?_r=1&_t=ZS-93iScUmJnk4" target="_blank" rel="noopener noreferrer">
-            <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" alt="TikTok" />
-          </a>
-</div>
+            <a href="https://www.instagram.com/cee_utp?igsh=aGI0NTIwaWJxZm1v" target="_blank" rel="noopener noreferrer">
+              <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="IG" />
+            </a>
+            <a href="https://facebook.com/yourpage" target="_blank" rel="noopener noreferrer">
+              <img src="https://cdn-icons-png.flaticon.com/512/5968/5968764.png" alt="FB" />
+            </a>
+            <a href="https://www.tiktok.com/@cee.utp_25?_r=1&_t=ZS-93iScUmJnk4" target="_blank" rel="noopener noreferrer">
+              <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" alt="TikTok" />
+            </a>
+          </div>
         </div>
         <h2 className="header-title">STUDY PLAN</h2>
       </header>
 
-      <main className="landing-content">
-        <div className="image-section">
-          <img src={UTP} alt="University Building" className="hero-illustration" />
+      {/* Hero Section with Image on Right */}
+      <section className="hero-section">
+        <div className="hero-container">
+          <div className="hero-grid">
+            <div className="hero-content">
+              <h1 className="hero-title">HELLO STUDENTS!</h1>
+              <h2 className="hero-subtitle">PLAN YOUR SEMESTER</h2>
+              <p className="hero-description">
+                Track courses, manage credits, and stay on top of your studies  all in one clean website.
+              </p>
+              
+              <div className="auth-buttons">
+                <button 
+                  className="btn-google"
+                  onClick={() => handleGoogleAuth('Sign Up')}
+                  disabled={loading}
+                >
+                  <span className="google-icon">G</span>
+                  {loading ? "Connecting..." : "Get Started with Google"}
+                </button>
+                <button 
+                  className="btn-account"
+                  onClick={() => handleGoogleAuth('Login')}
+                  disabled={loading}
+                >
+                  I Already Have an Account
+                </button>
+              </div>
+              {message && <div className="error-msg">{message}</div>}
+            </div>
+            
+            <div className="hero-image">
+              <div className="image-container">
+                <div className="image-placeholder">
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+        
+        {/* Scroll Indicator */}
+        {showScrollHint && (
+          <div className="scroll-hint">
+            <div className="scroll-text">Scroll to explore</div>
+            <div className="scroll-arrow">↓</div>
+          </div>
+        )}
+      </section>
 
-        <div className="text-section">
-          <div className="typography-block">
-            {/* Inline color ensures black text despite global styles */}
-            <h1 style={{ color: "black", marginBottom: "35px" }}>HELLO STUDENTS !</h1>
-            <h2 className="main-subtitle-oneline" style={{ color: "black" }}>
-              PLAN YOUR SEMESTER
-            </h2>
-            <p>Track courses, manage credits, and stay on top of your studies — all in one clean website</p>
+      {/* Features Section */}
+      <section className="features-section">
+        <div className="section-container">
+          <div className="section-header">
+            <h2 className="section-title">Everything You Need to Succeed</h2>
+            <p className="section-subtitle">Designed specifically for students to simplify academic planning</p>
+          </div>
+          
+          <div className="features-grid">
+            {features.map(feature => (
+              <div key={feature.id} className="feature-card">
+                <div className="feature-icon">{feature.icon}</div>
+                <h3 className="feature-title">{feature.title}</h3>
+                <p className="feature-description">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="steps-section">
+        <div className="section-container">
+          <div className="section-header">
+            <h2 className="section-title">How It Works</h2>
+            <p className="section-subtitle">Get started in just three simple steps</p>
+          </div>
+          
+          <div className="steps-grid">
+            {steps.map(step => (
+              <div key={step.id} className="step-card">
+                <div className="step-number">{step.id}</div>
+                <div className="step-icon">{step.icon}</div>
+                <h3 className="step-title">{step.title}</h3>
+                <p className="step-description">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      
+
+      {/* CTA Section */}
+      <section className="cta-section">
+        <div className="section-container">
+          <div className="section-header">
+            <h2 className="cta-title">Ready to Plan Your Semester?</h2>
+            <p className="cta-subtitle">Join thousands of students who are already organizing their academic journey</p>
           </div>
           
           <div className="cta-buttons">
             <button 
-              className="btn-primary" 
+              className="btn-google btn-cta"
               onClick={() => handleGoogleAuth('Sign Up')}
               disabled={loading}
             >
-              {loading ? "Connecting..." : "get started with google"}
+              <span className="google-icon">G</span>
+              {loading ? "Connecting..." : "Get Started with Google"}
             </button>
-            
             <button 
-              className="btn-secondary" 
+              className="btn-account btn-cta"
               onClick={() => handleGoogleAuth('Login')}
+              disabled={loading}
             >
-              I already have an account
+              I Already Have an Account
             </button>
           </div>
-          {message && <div className="error-msg">{message}</div>}
         </div>
-      </main>
+      </section>
 
-<div className="bottom-wave">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-          <path 
-            fill="#034a84" 
-            fillOpacity="1" 
-            d="M0,32L60,74.7C120,117,240,203,360,234.7C480,267,600,245,720,202.7C840,160,960,96,1080,90.7C1200,85,1320,139,1380,165.3L1440,192L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"
-          ></path>
-        </svg>
-      </div>
+      {/* Footer */}
+      <footer className="footer">
+        <div className="footer-container">
+          <div className="footer-content">
+            <div className="footer-brand">
+              <div className="footer-logo-container">
+                <img src={logo} alt="CEE Logo" className="footer-logo" />
+                <div>
+                  <h3 className="footer-title">STUDY PLAN</h3>
+                  <p className="footer-tagline">Your academic success, organized.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="footer-links">
+             
+              
+              <div className="link-group">
+                <h4 className="link-title">Connect</h4>
+                <a href="https://www.instagram.com/cee_utp?igsh=aGI0NTIwaWJxZm1v" target="_blank" rel="noopener noreferrer" className="footer-link">Instagram</a>
+                <a href="https://facebook.com/yourpage" target="_blank" rel="noopener noreferrer" className="footer-link">Facebook</a>
+                <a href="https://www.tiktok.com/@cee.utp_25?_r=1&_t=ZS-93iScUmJnk4" target="_blank" rel="noopener noreferrer" className="footer-link">TikTok</a>
+              </div>
+            </div>
+          </div>
+          
+          <div className="footer-bottom">
+            <p className="copyright">© {new Date().getFullYear()} Study Plan - UTP. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
-}
+};
 
-export default Login;
+export default LandingPage;
