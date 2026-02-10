@@ -18,6 +18,7 @@ function App() {
   // --- New State for Intake Modal ---
   const [showIntakeModal, setShowIntakeModal] = useState(false);
   const [intakeDate, setIntakeDate] = useState("");
+  const [department, setDepartment] = useState("");
 
   // --- Theme Logic ---
   const toggleTheme = () => {
@@ -44,13 +45,14 @@ function App() {
             student_email: session.user.email,
             student_name: session.user.user_metadata.full_name || session.user.email,
             intake_session: profile?.intake_session || null,
+            student_department: profile?.student_department || null,
           };
           
           setUser(userData);
           localStorage.setItem('user', JSON.stringify(userData));
 
-          // Trigger popup if intake session is missing
-          if (!profile?.intake_session) {
+          // Trigger popup if intake session OR department is missing
+          if (!profile?.intake_session || !profile?.student_department) {
             setShowIntakeModal(true);
           }
         } catch (error) {
@@ -87,19 +89,21 @@ function App() {
   // --- New Intake Save Logic ---
   const handleSaveIntake = async () => {
     if (!intakeDate) return alert("Please select your intake date.");
+    if (!department) return alert("Please select your department.");
     
     try {
       // payload matches the schema provided
       await api.updateProfile(user.student_id, { 
         intake_session: intakeDate,
+        student_department: department,
         student_name: user.student_name 
       });
       
-      setUser(prev => ({ ...prev, intake_session: intakeDate }));
+      setUser(prev => ({ ...prev, intake_session: intakeDate, student_department: department }));
       setShowIntakeModal(false);
     } catch (err) {
       console.error("Update failed:", err);
-      alert("Failed to update intake session.");
+      alert("Failed to update intake session and department.");
     }
   };
 
@@ -142,14 +146,46 @@ function App() {
                   <div className="modal-content">
                     <h2 style={{ color: 'var(--text-color)', marginBottom: '1rem' }}>Welcome!</h2>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                      Please provide your intake session date to help us track your "Graduate On Time" progress.
+                      Please provide your intake session date and department to help us track your academic progress.
                     </p>
-                    <input 
-                      type="date" 
-                      className="intake-date-input"
-                      value={intakeDate}
-                      onChange={(e) => setIntakeDate(e.target.value)}
-                    />
+                    
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-color)' }}>
+                        Intake Session Date
+                      </label>
+                      <input 
+                        type="date" 
+                        className="intake-date-input"
+                        value={intakeDate}
+                        onChange={(e) => setIntakeDate(e.target.value)}
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '2px solid var(--border-color)' }}
+                      />
+                    </div>
+                    
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-color)' }}>
+                        Department
+                      </label>
+                      <select 
+                        className="department-select"
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '2px solid var(--border-color)', background: 'var(--bg-primary)' }}
+                      >
+                        <option value="">Select Department</option>
+                        <option value="Chemical Engineering">Chemical Engineering</option>
+                        <option value="Civil Engineering">Civil Engineering</option>
+                        <option value="Electrical & Electronic Engineering">Electrical & Electronic Engineering</option>
+                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                        <option value="Petroleum Engineering">Petroleum Engineering</option>
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="Information Technology">Information Technology</option>
+                        <option value="Business">Business</option>
+                        <option value="Science">Science</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    
                     <button className="intake-submit-btn" onClick={handleSaveIntake}>
                       Save and Continue
                     </button>

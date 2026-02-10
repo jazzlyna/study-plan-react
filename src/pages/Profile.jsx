@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { FaEnvelope, FaCheck, FaCalendarAlt, FaCamera, FaIdBadge } from 'react-icons/fa';
+import { FaEnvelope, FaCheck, FaCalendarAlt, FaCamera, FaIdBadge, FaBuilding } from 'react-icons/fa';
 import { api } from "../utils/api";
 import defaultAvatar from "../image/default_avatar.jpg";
 import './Profile.css';
@@ -17,6 +18,7 @@ function Profile({ user }) {
     student_image: defaultAvatar,
     student_GOT: "",
     intake_session: "",
+    student_department: "",
     cgpa: "0.00",
     credits: "0"
   });
@@ -39,6 +41,7 @@ function Profile({ user }) {
           student_image: profileData.student_image || defaultAvatar,
           student_GOT: (profileData.student_GOT === "string" || !profileData.student_GOT) ? "" : profileData.student_GOT,
           intake_session: (profileData.intake_session === "string" || !profileData.intake_session) ? "" : profileData.intake_session,
+          student_department: profileData.student_department || "",
           cgpa: summaryData.student_cgpa?.toFixed(2) || "0.00",
           credits: summaryData.count_completed_course || "0"
         });
@@ -68,7 +71,8 @@ function Profile({ user }) {
         student_name: formData.student_name,
         student_image: formData.student_image,
         student_GOT: formData.student_GOT || null,
-        intake_session: formData.intake_session || null
+        intake_session: formData.intake_session || null,
+        student_department: formData.student_department || null
       };
       await api.updateProfile(user.student_id, updatePayload);
       setIsEditing(false);
@@ -146,6 +150,35 @@ function Profile({ user }) {
               <div>
                 <label className="profile-label">User Email</label>
                 <p className="profile-value">{formData.student_email}</p>
+              </div>
+            </div>
+
+            <div className="profile-info-item">
+              <div className="profile-icon-circle"><FaBuilding /></div>
+              <div>
+                <label className="profile-label">Department</label>
+                {isEditing ? (
+                  <select 
+                    value={formData.student_department}
+                    onChange={(e) => setFormData({ ...formData, student_department: e.target.value })}
+                    className="profile-edit-input-center"
+                    style={{ width: '100%' }}
+                  >
+                    <option value="">Select Department</option>
+                    <option value="Chemical Engineering">Chemical Engineering</option>
+                    <option value="Civil Engineering">Civil Engineering</option>
+                    <option value="Electrical & Electronic Engineering">Electrical & Electronic Engineering</option>
+                    <option value="Mechanical Engineering">Mechanical Engineering</option>
+                    <option value="Petroleum Engineering">Petroleum Engineering</option>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="Information Technology">Information Technology</option>
+                    <option value="Business">Business</option>
+                    <option value="Science">Science</option>
+                    <option value="Other">Other</option>
+                  </select>
+                ) : (
+                  <p className="profile-value">{formData.student_department || "Not Set"}</p>
+                )}
               </div>
             </div>
 

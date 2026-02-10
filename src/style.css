@@ -136,3 +136,59 @@ div[class*="Dashboard"] {
 .main-content, .content-area {
   padding-top: 0 !important;
 }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--bg-primary);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 2px solid var(--border-color);
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.intake-submit-btn {
+  background: #00427c;
+  color: white;
+  border: 2px solid #00427c;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  text-transform: uppercase;
+  transition: 0.2s;
+}
+
+.intake-submit-btn:hover {
+  background: #003366;
+  border-color: #003366;
+  transform: translateY(-2px);
+}
+
+/* For dark theme */
+[data-theme="dark"] .modal-content {
+  background: #1a1a1a;
+  border-color: #333;
+}
+
+[data-theme="dark"] .intake-date-input,
+[data-theme="dark"] .department-select {
+  background: #2a2a2a;
+  color: white;
+  border-color: #444;
+}

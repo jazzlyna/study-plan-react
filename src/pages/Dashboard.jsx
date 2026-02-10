@@ -5,6 +5,7 @@ import "./Dashboard.css";
 function Dashboard({ user }) {
   const [plannedCourses, setPlannedCourses] = useState([]);
   const [currentCourses, setCurrentCourses] = useState([]);
+  const [completedCourses, setCompletedCourses] = useState([]);
   const [summary, setSummary] = useState(null);
   const [graduateOnTime, setGraduateOnTime] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -66,25 +67,29 @@ function Dashboard({ user }) {
         setGraduateOnTime(graduateOnTimeData);
         
         try {
-          const [plannedData, currentData] = await Promise.all([
+          const [plannedData, currentData, completedData] = await Promise.all([
             api.getPlannedCourse ? api.getPlannedCourse(user.student_id) : Promise.resolve([]),
-            api.getCurrentCourse ? api.getCurrentCourse(user.student_id) : Promise.resolve([])
+            api.getCurrentCourse ? api.getCurrentCourse(user.student_id) : Promise.resolve([]),
+            api.getCompletedCourse ? api.getCompletedCourse(user.student_id) : Promise.resolve([])
           ]);
           
-          if (plannedData.length > 0 || currentData.length > 0) {
+          if (plannedData.length > 0 || currentData.length > 0 || completedData.length > 0) {
             setPlannedCourses(Array.isArray(plannedData) ? plannedData : []);
             setCurrentCourses(Array.isArray(currentData) ? currentData : []);
+            setCompletedCourses(Array.isArray(completedData) ? completedData : []);
           } else {
             const allCourses = await api.getCourseList(user.student_id);
             const coursesArray = Array.isArray(allCourses) ? allCourses : [];
             setPlannedCourses(coursesArray.filter(c => c.status === "Planned"));
             setCurrentCourses(coursesArray.filter(c => c.status === "Current"));
+            setCompletedCourses(coursesArray.filter(c => c.status === "Completed"));
           }
         } catch (error) {
           const allCourses = await api.getCourseList(user.student_id);
           const coursesArray = Array.isArray(allCourses) ? allCourses : [];
           setPlannedCourses(coursesArray.filter(c => c.status === "Planned"));
           setCurrentCourses(coursesArray.filter(c => c.status === "Current"));
+          setCompletedCourses(coursesArray.filter(c => c.status === "Completed"));
         }
         
         setLoading(false);
@@ -100,7 +105,7 @@ function Dashboard({ user }) {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
   
-  const displayCourses = activeTab === "planned" ? plannedCourses : currentCourses;
+  const displayCourses = activeTab === "planned" ? plannedCourses : activeTab === "completed" ? completedCourses : currentCourses;
   
   // Calculate GOT percentage from API response
   const gotPercentage = graduateOnTime?.analysis?.progress_percentage || 0;
@@ -183,7 +188,7 @@ function Dashboard({ user }) {
           style={{ cursor: 'pointer' }}
         >
           <span className="stat-label">Planned Courses</span>
-          <span className="stat-value">{plannedCourses.length || summary?.count_planned_course || "0"}</span>
+          <span className="stat-value">{summary?.count_planned_course || "0"}</span>
         </div>
 
         {/* Current Courses */}
@@ -195,16 +200,19 @@ function Dashboard({ user }) {
           style={{ cursor: 'pointer' }}
         >
           <span className="stat-label">In Progress</span>
-          <span className="stat-value">{currentCourses.length || summary?.count_current_course || "0"}</span>
+          <span className="stat-value">{summary?.count_current_course || "0"}</span>
         </div>
 
-        {/* Total Credits */}
-        <div className="stat-card"
-          onMouseEnter={() => setHoveredStat("credits")}
+        {/* Completed Courses */}
+        <div 
+          className={`stat-card ${activeTab === "completed" ? "active-stat" : ""}`}
+          onClick={() => setActiveTab("completed")}
+          onMouseEnter={() => setHoveredStat("completed")}
           onMouseLeave={() => setHoveredStat(null)}
+          style={{ cursor: 'pointer' }}
         >
-          <span className="stat-label">Total Credits</span>
-          <span className="stat-value">{summary?.total_credits || "0"}</span>
+          <span className="stat-label">Completed Courses</span>
+          <span className="stat-value">{summary?.count_completed_course || "0"}</span>
         </div>
 
         {/* Current CGPA */}
@@ -229,7 +237,7 @@ function Dashboard({ user }) {
             </p>
           </div>
           <div className="progress-percentage">
-            <span className="percentage-value">{graduateOnTime.analysis.graduate_on_time_date }</span>
+            <span className="percentage-value">{graduateOnTime.analysis.graduate_on_time_date}</span>
             <span className="percentage-label" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Completion</span>
           </div>
         </div>
@@ -265,14 +273,21 @@ function Dashboard({ user }) {
           onClick={() => setActiveTab("current")}
         >
           <span>In Progress Courses</span>
-          <span className="tab-count">({currentCourses.length || summary?.count_current_course || "0"})</span>
+          <span className="tab-count">({summary?.count_current_course || "0"})</span>
         </button>
         <button 
           className={`tab-btn ${activeTab === "planned" ? "active" : ""}`}
           onClick={() => setActiveTab("planned")}
         >
           <span>Planned Courses</span>
-          <span className="tab-count">({plannedCourses.length || summary?.count_planned_course || "0"})</span>
+          <span className="tab-count">({summary?.count_planned_course || "0"})</span>
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === "completed" ? "active" : ""}`}
+          onClick={() => setActiveTab("completed")}
+        >
+          <span>Completed Courses</span>
+          <span className="tab-count">({summary?.count_completed_course || "0"})</span>
         </button>
       </div>
 
@@ -284,7 +299,7 @@ function Dashboard({ user }) {
               <th>Code</th>
               <th>Course Name</th>
               <th>Status</th>
-              {activeTab === "current" && <th>Grade</th>}
+              {(activeTab === "current" || activeTab === "completed") && <th>Grade</th>}
             </tr>
           </thead>
           <tbody>
@@ -298,7 +313,7 @@ function Dashboard({ user }) {
                       {course.status}
                     </span>
                   </td>
-                  {activeTab === "current" && (
+                  {(activeTab === "current" || activeTab === "completed") && (
                     <td>
                       <span className="grade-display" style={{
                         color: course.grade === 'A' ? '#4CAF50' : 
@@ -315,8 +330,8 @@ function Dashboard({ user }) {
               ))
             ) : (
               <tr>
-                <td colSpan={activeTab === "current" ? 4 : 3} style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255, 255, 255, 0.6)' }}>
-                  No {activeTab === "planned" ? "planned" : "in progress"} courses found.
+                <td colSpan={(activeTab === "current" || activeTab === "completed") ? 4 : 3} style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255, 255, 255, 0.6)' }}>
+                  No {activeTab === "planned" ? "planned" : activeTab === "current" ? "in progress" : "completed"} courses found.
                 </td>
               </tr>
             )}

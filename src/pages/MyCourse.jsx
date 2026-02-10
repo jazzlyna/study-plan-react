@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaChevronLeft, FaChevronDown } from 'react-icons/fa'; // Added FaChevronDown
 import { api } from '../utils/api'; 
+import { supabase } from '../utils/api';
 import './MyCourse.css';
 
 export default function MyCourse() {
@@ -12,23 +13,37 @@ export default function MyCourse() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [semFilter, setSemFilter] = useState('All');
+  const [studentId, setStudentId] = useState(null);
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setStudentId(user.id);
+      }
+    };
+    getSession();
+  }, []);
 
   const isAllSubtab = (activeTab === 'core' && activeGeneralType === 'All') || 
                       (activeTab === 'spec' && activeSpecSubTab === 'All');
 
   const fetchCourses = async () => {
+
+    if (!studentId) return;
+
     setLoading(true);
     try {
       let data = [];
       if (activeTab === 'spec') {
-        data = await api.getAllSpecialization();
+        data = await api.getAllSpecialization(studentId);
       } else {
         switch (activeGeneralType) {
-          case 'NR': data = await api.getAllNational(); break;
-          case 'UR': data = await api.getAllUniversity(); break;
-          case 'CC': data = await api.getAllCommon(); break;
-          case 'CD': data = await api.getAllCoreDiscipline(); break;
-          default:   data = await api.getCourses(); break;
+          case 'NR': data = await api.getAllNational(studentId); break;
+          case 'UR': data = await api.getAllUniversity(studentId); break;
+          case 'CC': data = await api.getAllCommon(studentId); break;
+          case 'CD': data = await api.getAllCoreDiscipline(studentId); break;
+          default:   data = await api.getCourses(studentId); break;
         }
       }
 
@@ -50,7 +65,9 @@ export default function MyCourse() {
     }
   };
 
-  useEffect(() => { fetchCourses(); }, [activeTab, activeGeneralType, activeSpecSubTab]);
+  useEffect(() => { 
+    if (studentId) fetchCourses(); 
+  }, [studentId, activeTab, activeGeneralType, activeSpecSubTab]);
 
   const filteredCourses = courses.filter(c => {
     const searchMatch = (c.name + c.code).toLowerCase().includes(searchQuery.toLowerCase());
@@ -62,9 +79,7 @@ export default function MyCourse() {
     return searchMatch && semMatch && specMatch;
   });
 
-// Updated Detail View logic in MyCourse.jsx
-// Inside the if (selectedCourse) block in MyCourse.jsx
-// Inside the if (selectedCourse) block in MyCourse.jsx
+
 if (selectedCourse) {
   return (
     <div className="course-container">

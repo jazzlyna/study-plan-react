@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './SignUpLogin.css';
 import { api } from '../utils/api';
 import logo from '../image/logo.png';
-import heroImage from '../image/hero-image.jpg'
+import heroImage from '../image/hero-image.png'
 
 const LandingPage = () => {
   const [loading, setLoading] = useState(false);
@@ -62,7 +62,7 @@ const LandingPage = () => {
     {
       id: 4,
       title: "Progress Analytics",
-      description: "Visualize your academic progress with charts and insights.",
+      description: "Visualize your academic progress .",
       icon: "📊"
     }
   ];
@@ -71,7 +71,7 @@ const LandingPage = () => {
     {
       id: 1,
       title: "Sign Up",
-      description: "Create your account using your university email or Google account.",
+      description: "Create your account using your Google account.",
       icon: "👤"
     },
     {
@@ -88,29 +88,6 @@ const LandingPage = () => {
     }
   ];
 
-  const testimonials = [
-    {
-      id: 1,
-      name: "Alex Johnson",
-      role: "Computer Science Senior",
-      text: "This planner helped me stay on track for graduation. I could visualize my entire degree path!",
-      rating: "★★★★★"
-    },
-    {
-      id: 2,
-      name: "Maria Garcia",
-      role: "Engineering Student",
-      text: "Managing credits across semesters was confusing until I found this tool. Now it's a breeze!",
-      rating: "★★★★★"
-    },
-    {
-      id: 3,
-      name: "David Chen",
-      role: "Business Major",
-      text: "The clean interface and easy tracking kept me organized throughout my toughest semesters.",
-      rating: "★★★★☆"
-    }
-  ];
 
   return (
     <div className="landing-page">
@@ -166,8 +143,11 @@ const LandingPage = () => {
             
             <div className="hero-image">
               <div className="image-container">
-                <div className="image-placeholder">
-                </div>
+                <img 
+                   src={heroImage} 
+                    alt="Student studying" 
+                  className="hero-illustration"
+                />
               </div>
             </div>
           </div>
@@ -230,7 +210,7 @@ const LandingPage = () => {
         <div className="section-container">
           <div className="section-header">
             <h2 className="cta-title">Ready to Plan Your Semester?</h2>
-            <p className="cta-subtitle">Join thousands of students who are already organizing their academic journey</p>
+            
           </div>
           
           <div className="cta-buttons">

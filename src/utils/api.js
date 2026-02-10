@@ -51,7 +51,7 @@ updateProfile: (studentId, data) =>
   getGraduateOnTime: (studentId) => fetchAPI(`/student/graduate-on-time/${studentId}`),
 
   // --- DASHBOARD ---
-  
+  getCompletedCourse: (studentId) => fetchAPI(`/student_course/CompletedCourse/${studentId}`),  
   getCourseSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
   getCourseList: (studentId) => fetchAPI(`/student_course/get/${studentId}`),
   getPlannedCourse: (studentId) => fetchAPI(`/student_course/PlannedCourse/${studentId}`),
@@ -108,11 +108,11 @@ getPool: (endpoint) => fetchAPI(`/${endpoint}`),
   getCoreSpecializationCourses: (studentId) => fetchAPI(`/course/get/CourseAvailable/CoreSpecialization/${studentId}`),
 
   // --- MY COURSE ---
-  getAllNational: () => fetchAPI(`/course/get/NationalRequirement`),
-  getAllUniversity: () => fetchAPI(`/course/get/UniversityRequirement`),
-  getAllCommon: () => fetchAPI(`/course/get/CommonCourse`),
-  getAllCoreDiscipline: () => fetchAPI(`/course/get/CoreDiscipline`),
-  getAllSpecialization: () => fetchAPI(`/course/get/CoreSpecialization`),
+  getAllNational: (studentId) => fetchAPI(`/course/get/NationalRequirement/${studentId}`),
+  getAllUniversity: (studentId) => fetchAPI(`/course/get/UniversityRequirement/${studentId}`),
+  getAllCommon: (studentId) => fetchAPI(`/course/get/CommonCourse/${studentId}`),
+  getAllCoreDiscipline: (studentId) => fetchAPI(`/course/get/CoreDiscipline/${studentId}`),
+  getAllSpecialization: (studentId) => fetchAPI(`/course/get/CoreSpecialization/${studentId}`),
 
   // --- AI ADVISOR ---
   getAIAnalysis: (studentId) => fetchAPI(`/advisor/ai-advisor/${studentId}`)
