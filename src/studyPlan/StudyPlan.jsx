@@ -72,6 +72,9 @@ function StudyPlan({ user }) {
   const [isSavingDeferment, setIsSavingDeferment] = useState(false);
   const [defermentError, setDefermentError] = useState('');
 
+  // Add state for credit limit warning
+  const [creditWarning, setCreditWarning] = useState(null);
+
   // Add missing handleDeleteSemester function
   const handleDeleteSemester = async () => {
     if (window.confirm(`Delete Semester ${selectedSem.number}?`)) {
@@ -154,6 +157,30 @@ const handleEditSemester = () => {
       setRegularDeferment('');
     }
   };
+
+  // Check credit limit when viewing a semester
+  React.useEffect(() => {
+    const checkCreditLimit = async () => {
+      if (view === 'view' && selectedSem) {
+        const semCredits = semesterCredits[selectedSem.number] || 0;
+        const maxLimit = await getMaxCreditsDisplay(selectedSem.number);
+        
+        if (semCredits > maxLimit) {
+          setCreditWarning({
+            semester: selectedSem.number,
+            credits: semCredits,
+            limit: maxLimit
+          });
+        } else {
+          setCreditWarning(null);
+        }
+      } else {
+        setCreditWarning(null);
+      }
+    };
+    
+    checkCreditLimit();
+  }, [view, selectedSem, semesterCredits, getMaxCreditsDisplay]);
 
   return (
     <div className="dashboard-wrapper">
@@ -377,36 +404,25 @@ const handleEditSemester = () => {
               </div>
             </div>
             
-            {/* Credit Warning Display */}
-            {(() => {
-              const semCredits = semesterCredits[selectedSem.number] || 0;
-              // Fetch max limit for display
-              const maxLimit = getMaxCreditsDisplay(selectedSem.number).then(limit => {
-                if (semCredits > limit) {
-                  return (
-                    <div style={{
-                      backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                      border: '1px solid rgba(255, 107, 107, 0.3)',
-                      borderRadius: '8px',
-                      padding: '15px',
-                      marginBottom: '20px',
-                      color: '#ff6b6b'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                        <FaExclamationTriangle />
-                        <strong>Credit Limit Exceeded</strong>
-                      </div>
-                      <div style={{ fontSize: '14px' }}>
-                        This semester has {semCredits} credits, exceeding the maximum allowed of {limit} credits.
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              });
-              
-              return null; // This will be handled async
-            })()}
+            {/* Credit Warning Display - FIXED */}
+            {creditWarning && (
+              <div style={{
+                backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                border: '1px solid rgba(255, 107, 107, 0.3)',
+                borderRadius: '8px',
+                padding: '15px',
+                marginBottom: '20px',
+                color: '#ff6b6b'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                  <FaExclamationTriangle />
+                  <strong>Credit Limit Exceeded</strong>
+                </div>
+                <div style={{ fontSize: '14px' }}>
+                  This semester has {creditWarning.credits} credits, exceeding the maximum allowed of {creditWarning.limit} credits.
+                </div>
+              </div>
+            )}
             
             <div className="semester-header">
               <div className="semester-info">

@@ -1,5 +1,5 @@
-// CoursePool.jsx - FIXED VERSION
-import React from 'react';
+// CoursePool.jsx - FIXED VERSION with working search
+import React, { useEffect } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import './StudyPlan.css';
 
@@ -86,25 +86,33 @@ const CoursePool = ({
         {Object.keys(curriculumPool).length > 0 ? (
           Object.keys(curriculumPool)
             .sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0))
-            .map(sem => (
-              <div key={sem} style={{ marginBottom: '10px' }}>
-                <div 
-                  className="semester-header-label clickable" 
-                  onClick={() => setExpandedSem(expandedSem === sem ? null : sem)} 
-                  style={{ background: expandedSem === sem ? 'rgba(129, 199, 132, 0.1)' : 'rgba(255,255,255,0.03)' }}
-                >
-                  <span style={{ fontWeight: 'bold' }}>Semester {sem}</span>
-                  <span>{expandedSem === sem ? '−' : '+'}</span>
-                </div>
-                
-                {expandedSem === sem && (
-                  <div className="semester-courses">
-                    {curriculumPool[sem]
-                      .filter(c => 
-                        c.course_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        c.course_code?.toLowerCase().includes(searchQuery.toLowerCase())
-                      )
-                      .map(course => (
+            .map(sem => {
+              // FILTER COURSES FIRST - Apply search filter to this semester's courses
+              const filteredCourses = curriculumPool[sem].filter(c => 
+                c.course_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                c.course_code?.toLowerCase().includes(searchQuery.toLowerCase())
+              );
+              
+              // Don't show semester if it has no matching courses and we're searching
+              if (searchQuery.trim() !== '' && filteredCourses.length === 0) {
+                return null;
+              }
+              
+              return (
+                <div key={sem} style={{ marginBottom: '10px' }}>
+                  <div 
+                    className="semester-header-label clickable" 
+                    onClick={() => setExpandedSem(expandedSem === sem ? null : sem)} 
+                    style={{ background: expandedSem === sem ? 'rgba(129, 199, 132, 0.1)' : 'rgba(255,255,255,0.03)' }}
+                  >
+                    <span style={{ fontWeight: 'bold' }}>Semester {sem}</span>
+                    <span>{expandedSem === sem ? '−' : '+'}</span>
+                  </div>
+                  
+                  {/* SHOW COURSES WHEN: expanded OR when searching (always show results when searching) */}
+                  {(expandedSem === sem || searchQuery.trim() !== '') && (
+                    <div className="semester-courses">
+                      {filteredCourses.map(course => (
                         <div 
                           key={course.course_code} 
                           draggable 
@@ -118,14 +126,33 @@ const CoursePool = ({
                              {course.credit_hour} Credits • Pre: {course.pre_requisite || 'None'}
                           </div>
                         </div>
-                      ))
-                    }
-                  </div>
-                )}
-              </div>
-            ))
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })
         ) : (
-          <div className="empty-state">Select a category or semester</div>
+          <div className="empty-state">
+            {searchQuery.trim() !== '' 
+              ? 'No matching courses found' 
+              : 'Select a category or semester'}
+          </div>
+        )}
+        
+        {/* Show "no results" message when searching and no semesters are displayed */}
+        {Object.keys(curriculumPool).length > 0 && 
+         searchQuery.trim() !== '' && 
+         Object.keys(curriculumPool)
+           .filter(sem => 
+             curriculumPool[sem].some(c => 
+               c.course_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+               c.course_code?.toLowerCase().includes(searchQuery.toLowerCase())
+             )
+           ).length === 0 && (
+          <div className="empty-state">
+            No courses match "{searchQuery}"
+          </div>
         )}
       </div>
     </div>

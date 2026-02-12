@@ -441,6 +441,6 @@ export const useStudyPlan = (user) => {
     gradeOptions, handleAddCourse, handleSaveAnywayWithCreditLimit, handleSaveSemester,
     handleGeneratePDF, fetchPool, resetForm, calculateCurrentCredits, getMaxCreditsDisplay,
     isExceedingLimit, getCleanPrereq, getGradeColor,
-    fetchCreditLimitFromSummary  // Updated function
+    fetchCreditLimitFromSummary  
   };
 };

@@ -21,7 +21,7 @@ const SemesterBuilder = ({
   isExceedingLimit,
   gradeOptions,
   savedSemesters,
-  fetchCreditLimitFromSummary  // Get the fetch function from props
+  fetchCreditLimitFromSummary  
 }) => {
   const [currentCreditLimit, setCurrentCreditLimit] = useState(15);
   const [isLoadingLimit, setIsLoadingLimit] = useState(false);
@@ -151,7 +151,7 @@ const SemesterBuilder = ({
                               ? {...c, grade: e.target.value} 
                               : c
                           )
-                        )} >
+                        )} required >
                         <option value="">-</option>
                         {gradeOptions.map(g => <option key={g} value={g}>{g}</option>)}
                       </select>
@@ -178,13 +178,23 @@ const SemesterBuilder = ({
           Cancel
         </button>
         <button 
-          className="save-btn" 
-          onClick={() => handleSaveSemester(false)} 
-          disabled={isSaving || currentSelection.length === 0} 
-          style={{ opacity: isSaving ? 0.7 : 1 }}
-        >
-          {isSaving ? 'Saving...' : 'Save Semester'}
-        </button>
+  className="save-btn" 
+  onClick={() => {
+    //validation
+    if (semStatus === 'Completed') {
+      const missingGrades = currentSelection.filter(course => !course.grade || course.grade === '');
+      if (missingGrades.length > 0) {
+        alert('If you have completed this semester please enter your grade. If not choose your current status.');
+        return; 
+      }
+    }
+    handleSaveSemester(false);
+  }} 
+  disabled={isSaving || currentSelection.length === 0} 
+  style={{ opacity: isSaving ? 0.7 : 1 }}
+>
+  {isSaving ? 'Saving...' : 'Save Semester'}
+</button>
       </div>
     </div>
   );
