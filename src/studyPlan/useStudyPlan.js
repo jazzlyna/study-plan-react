@@ -26,6 +26,45 @@ export const useStudyPlan = (user) => {
   
   const gradeOptions = ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"];
 
+  // ===== NEW VALIDATION FUNCTION ADDED HERE =====
+  const canSetSemesterStatus = useCallback((targetSemester, newStatus) => {
+    // Get all semesters before the target semester
+    const previousSemesters = savedSemesters
+      .filter(sem => sem.number < targetSemester)
+      .sort((a, b) => a.number - b.number);
+    
+    // If there are no previous semesters, always allow
+    if (previousSemesters.length === 0) return { allowed: true };
+    
+    // Get the most recent previous semester
+    const latestPreviousSem = previousSemesters[previousSemesters.length - 1];
+    const prevStatus = latestPreviousSem.status?.toLowerCase() || '';
+    
+    // Validation rules:
+    // 1. If previous semester is 'planned' -> next semester cannot be 'current' or 'completed'
+    if (prevStatus === 'planned') {
+      if (newStatus === 'Current' || newStatus === 'Completed') {
+        return {
+          allowed: false,
+          message: `Semester ${targetSemester} cannot be set to "${newStatus}" because Semester ${latestPreviousSem.number} is still "Planned".`
+        };
+      }
+    }
+    
+    // 2. If previous semester is 'current' -> next semester cannot be 'completed'
+    if (prevStatus === 'current') {
+      if (newStatus === 'Completed') {
+        return {
+          allowed: false,
+          message: `Semester ${targetSemester} cannot be set to "Completed" because Semester ${latestPreviousSem.number} is still "Current". Please finish the current semester first.`
+        };
+      }
+    }
+    
+    return { allowed: true };
+  }, [savedSemesters]);
+  // ===== END OF NEW VALIDATION FUNCTION =====
+
   const getCleanPrereq = (val) => {
     if (!val) return null;
     const ignore = ["null", "none", "-", "", "undefined", "n/a", "[]"];
@@ -107,9 +146,36 @@ export const useStudyPlan = (user) => {
     await handleSaveSemester(true);
   };
 
-  // UPDATED handleSaveSemester function to use proper edit endpoint
+  // UPDATED handleSaveSemester function with status validation
   const handleSaveSemester = async (bypass = false) => {
     const targetSemester = parseInt(isEditing ? selectedSem.number : savedSemesters.length + 1);
+    
+    // ===== NEW VALIDATION CODE ADDED HERE =====
+    // Check if we're editing an existing semester
+    if (isEditing) {
+      // Get the original status of the semester we're editing
+      const originalStatus = selectedSem.status;
+      
+      // If status hasn't changed, skip the validation
+      if (originalStatus !== semStatus) {
+        // When editing, check all semesters BEFORE this one
+        const statusCheck = canSetSemesterStatus(targetSemester, semStatus);
+        
+        if (!statusCheck.allowed) {
+          alert(statusCheck.message);
+          return;
+        }
+      }
+    } else {
+      // For NEW semesters, validate against previous semesters
+      const statusCheck = canSetSemesterStatus(targetSemester, semStatus);
+      
+      if (!statusCheck.allowed) {
+        alert(statusCheck.message);
+        return;
+      }
+    }
+    // ===== END OF NEW VALIDATION CODE =====
     
     if (!bypass) {
       let errorMsg = null;
@@ -130,9 +196,6 @@ export const useStudyPlan = (user) => {
             s.courses.some(c => c.course_code === cleanP && c.grade && c.grade !== "" && c.grade !== "F")
           );
 
-
-
-          
           if (inSame) {
             errorMsg = `Case A: [${course.course_code}] and its prerequisite [${cleanP}] are in the same semester. You need chair approval / chair approval and an attempt to [${cleanP}].`;
             break;
@@ -437,7 +500,7 @@ export const useStudyPlan = (user) => {
     curriculumPool, isDraggingOver, setIsDraggingOver, semesterCredits, courseCreditsMap,
     isSaving, pendingError, setPendingError, isGeneratingReport, expandedSem, setExpandedSem,
     creditLimitError, setCreditLimitError,
-    creditLimit, // Keep this for backward compatibility
+    creditLimit, 
     gradeOptions, handleAddCourse, handleSaveAnywayWithCreditLimit, handleSaveSemester,
     handleGeneratePDF, fetchPool, resetForm, calculateCurrentCredits, getMaxCreditsDisplay,
     isExceedingLimit, getCleanPrereq, getGradeColor,

@@ -247,36 +247,47 @@ function Profile({ user }) {
               </div>
             </div>
 
-            <div className="profile-info-item">
-              <div className="profile-icon-circle"><FaCheck /></div>
-              <div style={{ flex: 1 }}>
-                <label className="profile-label">Expected Graduation</label>
-                <div className="profile-value">
-                  {/* Displaying GOT analysis data */}
-                  {gotAnalysis ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ color: gotAnalysis.extra_semesters > 0 ? '#d32f2f' : 'inherit' }}>
-                        {gotAnalysis.graduate_on_time_date}
-                      </span>
-                      {gotAnalysis.extra_semesters > 0 && (
-                        <span style={{ 
-                          fontSize: '10px', 
-                          padding: '2px 8px', 
-                          background: '#000', 
-                          color: '#fff', 
-                          borderRadius: '4px',
-                          textTransform: 'uppercase'
-                        }}>
-                          +{gotAnalysis.extra_semesters} Sem Delay
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="profile-value">{formData.student_GOT || "Not Set"}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+<div className="profile-info-item">
+  <div className="profile-icon-circle"><FaCheck /></div>
+  <div style={{ flex: 1 }}>
+    <label className="profile-label">Expected Graduation</label>
+    <div className="profile-value">
+      {/* Displaying GOT analysis data */}
+      {gotAnalysis ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <span style={{ color: gotAnalysis.meta?.extra_semesters > 0 ? '#d32f2f' : 'inherit' }}>
+            {gotAnalysis.graduate_on_time_date}
+          </span>
+          {gotAnalysis.meta?.extra_semesters > 0 && (
+            <>
+              <span style={{ 
+                fontSize: '10px', 
+                padding: '2px 8px', 
+                background: '#000', 
+                color: '#fff', 
+                borderRadius: '4px',
+                textTransform: 'uppercase'
+              }}>
+                +{gotAnalysis.meta.extra_semesters} Sem Delay
+              </span>
+            </>
+          )}
+          {gotAnalysis.meta?.extra_semesters === 0 && (
+            <span style={{
+              fontSize: '12px',
+              fontWeight: 'bold',
+              color: '#2e7d32'
+            }}>
+              On Track
+            </span>
+          )}
+        </div>
+      ) : (
+        <p className="profile-value">{formData.student_GOT || "Not Set"}</p>
+      )}
+    </div>
+  </div>
+</div>
           </div>
 
           <div className="profile-button-group">

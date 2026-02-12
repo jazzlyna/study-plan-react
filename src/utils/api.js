@@ -64,6 +64,7 @@ getGPA: (studentId, semNum) => fetchAPI(`/student_course/GPA/${studentId}/${semN
 getSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
 getSemesterStanding: (studentId, semester) => fetchAPI(`/student_course/get/Standing/${studentId}/${semester}`),
 
+
 getCourses: (studentId) => {
   if (studentId) {
     return fetchAPI(`/course/get/all/${studentId}`);
