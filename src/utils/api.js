@@ -62,13 +62,12 @@ updateProfile: (studentId, data) =>
 getStudentPlan: (studentId) => fetchAPI(`/student_course/get/${studentId}`),
 getGPA: (studentId, semNum) => fetchAPI(`/student_course/GPA/${studentId}/${semNum}`),
 getSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
+getSemesterStanding: (studentId, semester) => fetchAPI(`/student_course/get/Standing/${studentId}/${semester}`),
 
 getCourses: (studentId) => {
   if (studentId) {
-    return fetchAPI(`/course/get/${studentId}`);
-  } else {
-    // Fallback to get all courses if no studentId
-    return fetchAPI(`/course/get/all`);
+    return fetchAPI(`/course/get/all/${studentId}`);
+
   }
 },
 getPool: (endpoint) => fetchAPI(`/${endpoint}`),

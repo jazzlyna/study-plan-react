@@ -282,7 +282,7 @@
 
 .stat-label {
   display: block;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 800;
   text-transform: uppercase;
   opacity: 0.6;
@@ -290,7 +290,7 @@
 }
 
 .stat-value {
-  font-size: 18px;
+  font-size: 25px;
   font-weight: 700;
 }
 
@@ -358,4 +358,61 @@
   font-weight: 900;
   text-transform: uppercase;
   display: inline-block;
+}
+
+/* Alternative: More subtle link */
+.resource-link {
+  color: #00427c;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  padding: 12px 10px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  opacity: 0.9;
+  transition: all 0.2s ease;
+}
+
+.resource-link:hover {
+  opacity: 1;
+  text-decoration-thickness: 2.5px;
+}
+
+[data-theme="dark"] .resource-link {
+  color: #7ba6d6;
+}
+
+/* Resource Link Button Styling */
+.resource-btn {
+  background: #00427c;
+  color: #ffffff !important;
+  border: 2px solid #000000 !important;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resource-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 0 #000;
+  opacity: 0.9;
+}
+
+/* Dark mode for resource button */
+[data-theme="dark"] .resource-btn {
+  background: #00427c !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
 }

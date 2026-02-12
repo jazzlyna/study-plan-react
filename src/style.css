@@ -158,7 +158,7 @@ div[class*="Dashboard"] {
   border: 2px solid var(--border-color);
   max-width: 500px;
   width: 90%;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px rgba(255, 255, 255, 0.3);
 }
 
 .intake-submit-btn {
@@ -188,7 +188,7 @@ div[class*="Dashboard"] {
 
 [data-theme="dark"] .intake-date-input,
 [data-theme="dark"] .department-select {
-  background: #2a2a2a;
-  color: white;
+  background: #ffffff;
+  color: rgb(147, 134, 134);
   border-color: #444;
 }

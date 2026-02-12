@@ -155,6 +155,23 @@ if (selectedCourse) {
         </div>
 
         <div className="filter-group">
+
+             <a 
+    href="https://utp.edu.my/Pages/Admission/Undergraduate/Bachelor-of-Civil-Engineering-with-Honours.aspx#menu1" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="resource-link-btn"
+    style={{ 
+      textDecoration: 'none',
+      display: 'flex',
+      alignItems: 'center'
+    }}
+  >
+    <button className="resource-btn">
+      Course Resources
+    </button>
+  </a>
+
           <div className="search-bar">
             <FaSearch size={16} style={{ opacity: 0.5 }} />
             <input type="text" placeholder="Search code or name..." onChange={(e) => setSearchQuery(e.target.value)} />

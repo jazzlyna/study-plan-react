@@ -225,46 +225,163 @@ function Dashboard({ user }) {
         </div>
       </div>
 
-      {/* Progress Bar Section - Graduate On Time */}
-      <div className="progress-section">
-        <div className="progress-header">
-          <div>
-            <h3 className="progress-title">Graduate On Time</h3>
-            <p className="progress-subtitle">
-              {graduateOnTime?.analysis?.graduate_on_time_date 
-                ? `Progress: ${gotPercentage.toFixed(1)}%` 
-                : 'Track your progress towards on-time graduation'}
-            </p>
-          </div>
-          <div className="progress-percentage">
-            <span className="percentage-value">{graduateOnTime.analysis.graduate_on_time_date}</span>
-            <span className="percentage-label" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Completion</span>
-          </div>
+
+{/* Progress Bar Section - Graduate On Time */}
+<div className="progress-section">
+  <div className="progress-header">
+    <div>
+      <h3 className="progress-title">Graduate On Time</h3>
+      <p className="progress-subtitle">
+        {graduateOnTime?.analysis?.graduate_on_time_date 
+          ? `Progress: ${gotPercentage.toFixed(1)}%` 
+          : graduateOnTime?.analysis?.message || 'Track your progress towards on-time graduation'}
+      </p>
+    </div>
+    <div className="progress-percentage">
+      {graduateOnTime?.analysis?.is_valid_degree ? (
+        <>
+          <span className="percentage-value" style={{ color: gotColor.main }}>
+            {graduateOnTime.analysis.graduate_on_time_date}
+          </span>
+          <span className="percentage-label" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+            Target Date
+          </span>
+        </>
+      ) : (
+        <div style={{ textAlign: 'right' }}>
+          <span className="percentage-value" style={{ 
+            color: '#F59E0B',
+            fontSize: '1.75rem'
+          }}>
+            Needs Review
+          </span>
+          <span className="percentage-label" style={{ 
+            color: 'rgba(255, 255, 255, 0.7)',
+            fontSize: '0.85rem'
+          }}>
+            Check degree plan
+          </span>
+        </div>
+      )}
+    </div>
+  </div>
+  
+  {graduateOnTime?.analysis?.is_valid_degree ? (
+    <>
+      <div className="progress-bar-container">
+        <div className="progress-bar-track">
+          <div 
+            className="progress-bar-fill"
+            style={{ 
+              width: `${gotPercentage}%`,
+              backgroundColor: gotColor.main,
+              boxShadow: `0 0 20px ${gotColor.glow}`
+            }}
+          ></div>
         </div>
         
-        <div className="progress-bar-container">
-          <div className="progress-bar-track">
-            <div 
-              className="progress-bar-fill"
-              style={{ 
-                width: `${gotPercentage}%`,
-                backgroundColor: gotColor.main,
-                boxShadow: `0 0 20px ${gotColor.glow}`
-              }}
-            ></div>
-          </div>
-          
-          <div className="progress-labels">
-            <span>0%</span>
-            <span>25%</span>
-            <span>50%</span>
-            <span>75%</span>
-            <span>100%</span>
-          </div>
+        <div className="progress-labels">
+          <span>0%</span>
+          <span>25%</span>
+          <span>50%</span>
+          <span>75%</span>
+          <span>100%</span>
         </div>
-        
-        
       </div>
+    </>
+  ) : (
+    <div style={{ 
+      padding: '1rem', 
+      backgroundColor: 'rgba(245, 158, 11, 0.08)', 
+      borderRadius: '12px',
+      border: '1px solid rgba(245, 158, 11, 0.3)',
+      marginTop: '1rem'
+    }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'flex-start', 
+        gap: '0.75rem'
+      }}>
+        <svg style={{ 
+          width: '20px', 
+          height: '20px', 
+          flexShrink: 0,
+          color: '#F59E0B',
+          marginTop: '2px'
+        }} fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        <div>
+          <div style={{ 
+            color: '#F59E0B',
+            fontWeight: '600',
+            fontSize: '0.95rem',
+            marginBottom: '0.25rem'
+          }}>
+            Degree Plan Review Needed
+          </div>
+          <div style={{ 
+            color: 'rgba(255, 255, 255, 0.8)',
+            fontSize: '0.9rem',
+            lineHeight: '1.4'
+          }}>
+            {graduateOnTime?.analysis?.message || 'Your current plan exceeds the recommended semester timeline.'}
+          </div>
+        </div>
+      </div>
+      
+      {/* Show total semesters if available */}
+      {graduateOnTime?.analysis?.total_semesters && (
+        <div style={{ 
+          marginTop: '1rem',
+          paddingTop: '1rem',
+          borderTop: '1px solid rgba(245, 158, 11, 0.2)'
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.5rem'
+          }}>
+            <span style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+              Semester Count
+            </span>
+            <span style={{ 
+              fontWeight: '600', 
+              color: '#F59E0B',
+              fontSize: '1.1rem'
+            }}>
+              {graduateOnTime.analysis.total_semesters} / 21
+            </span>
+          </div>
+          <div style={{ 
+            height: '6px',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '3px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: `${Math.min(100, (graduateOnTime.analysis.total_semesters / 21) * 100)}%`,
+              height: '100%',
+              backgroundColor: '#F59E0B',
+              borderRadius: '3px'
+            }}></div>
+          </div>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            fontSize: '0.75rem',
+            marginTop: '0.5rem',
+            color: 'rgba(255, 255, 255, 0.5)'
+          }}>
+            <span>On Track (≤21)</span>
+            <span>Extended Timeline</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )}
+</div>
 
       {/* Tab Navigation */}
       <div className="tab-container">

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { generatePDFReport } from '../utils/reportGenerator';
 import { api } from "../utils/api";
@@ -7,7 +6,7 @@ export const useStudyPlan = (user) => {
   const [view, setView] = useState('list');
   const [savedSemesters, setSavedSemesters] = useState([]);
   const [currentSelection, setCurrentSelection] = useState([]);
-  const [semStatus, setSemStatus] = useState('Planned');
+  const [semStatus, setSemStatus] = useState('Completed');
   const [selectedSem, setSelectedSem] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,39 +32,24 @@ export const useStudyPlan = (user) => {
     return ignore.includes(String(val).trim().toLowerCase()) ? null : String(val).trim();
   };
 
-  // UPDATED: Fetch credit limit with probation check
-  const fetchCreditLimitFromSummary = useCallback(async () => {
-    if (!user?.student_id) return;
+  // UPDATED: Fetch credit limit directly from backend for specific semester
+  const fetchCreditLimitFromSummary = useCallback(async (semesterNumber) => {
+    if (!user?.student_id) return 15;
     
     try {
-      const summaryData = await api.getSummary(user.student_id);
+      const standingData = await api.getSemesterStanding(user.student_id, semesterNumber);
       
-      // Check if student is on probation
-      // Option 1: Check if probation status is directly available
-      const isOnProbation = summaryData.academic_meta?.is_probation || 
-                           summaryData.is_probation || 
-                           false;
-      
-      // Option 2: Determine probation by GPA (if GPA < 2.0)
-      let gpaBasedProbation = false;
-      if (summaryData.current_gpa !== undefined) {
-        gpaBasedProbation = summaryData.current_gpa < 2.0;
+      // Use the max_limit directly from backend
+      if (standingData?.academic_meta?.max_limit !== undefined) {
+        return standingData.academic_meta.max_limit;
       }
       
-      // Set credit limit based on probation status
-      const finalIsOnProbation = isOnProbation || gpaBasedProbation;
-      
-      if (finalIsOnProbation) {
-        setCreditLimit(11); // Probation limit
-      } else {
-        // Use the backend max_limit if available, otherwise default to 15
-        setCreditLimit(summaryData.academic_meta?.max_limit || 15);
-      }
-      
+      // Fallback to 15 if no data
+      return 15;
     } catch (err) {
-      console.error("Error fetching credit limit from summary:", err);
+      console.error("Error fetching credit limit from standing:", err);
       // Default to 15 if there's an error
-      setCreditLimit(15);
+      return 15;
     }
   }, [user?.student_id]);
 
@@ -73,15 +57,15 @@ export const useStudyPlan = (user) => {
     currentSelection.reduce((total, course) => 
       total + (courseCreditsMap[course.course_code] || 3), 0);
 
-  const getMaxCreditsDisplay = useCallback((semesterNumber) => {
-    // Always return the single credit limit for all semesters
-    return creditLimit;
-  }, [creditLimit]);
+  const getMaxCreditsDisplay = useCallback(async (semesterNumber) => {
+    // Fetch directly from backend for this specific semester
+    return await fetchCreditLimitFromSummary(semesterNumber);
+  }, [fetchCreditLimitFromSummary]);
 
-  const isExceedingLimit = useCallback((currentCredits, semesterNumber) => {
-    const maxLimit = getMaxCreditsDisplay(semesterNumber);
+  const isExceedingLimit = useCallback(async (currentCredits, semesterNumber) => {
+    const maxLimit = await fetchCreditLimitFromSummary(semesterNumber);
     return currentCredits > maxLimit;
-  }, [getMaxCreditsDisplay]);
+  }, [fetchCreditLimitFromSummary]);
 
   const handleAddCourse = (course) => {
     if (currentSelection.some(c => c.course_code === course.course_code)) {
@@ -166,7 +150,8 @@ export const useStudyPlan = (user) => {
       }
       
       const currentCredits = calculateCurrentCredits();
-      const maxLimit = getMaxCreditsDisplay(targetSemester);
+      // Fetch max limit directly from backend for this semester
+      const maxLimit = await fetchCreditLimitFromSummary(targetSemester);
       
       if (currentCredits > maxLimit) {
         errorMsg = `You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxLimit} credits for this semester.`;
@@ -247,7 +232,6 @@ export const useStudyPlan = (user) => {
       
       // Refresh data after save
       await fetchUserPlan();
-      await fetchCreditLimitFromSummary();
       resetForm();
       
     } catch (error) {
@@ -323,13 +307,10 @@ export const useStudyPlan = (user) => {
       
       setSavedSemesters(finalized.sort((a, b) => a.number - b.number));
 
-      // Fetch credit limits after loading semesters
-      await fetchCreditLimitFromSummary();
-
     } catch (err) { 
       console.error("Error fetching user plan:", err); 
     }
-  }, [user?.student_id, fetchCreditLimitFromSummary]);
+  }, [user?.student_id]);
 
   const fetchSemesterCredits = useCallback(async () => {
     if (!user?.student_id) return;
@@ -344,9 +325,6 @@ export const useStudyPlan = (user) => {
         });
         setSemesterCredits(creditsMap);
       }
-      
-      // Also fetch credit limits when we get summary data
-      // This will be handled by fetchCreditLimitFromSummary
     } catch (err) { 
       console.error("Error fetching semester credits:", err); 
     }
@@ -432,31 +410,18 @@ export const useStudyPlan = (user) => {
   useEffect(() => {
     if (view === 'view' && selectedSem) {
       const semCredits = semesterCredits[selectedSem.number] || 0;
-      const maxLimit = getMaxCreditsDisplay(selectedSem.number);
-      
-      if (semCredits > maxLimit) {
-        console.warn(`Semester ${selectedSem.number} exceeds credit limit: ${semCredits} > ${maxLimit}`);
-      }
+      // Fetch max limit for this semester
+      fetchCreditLimitFromSummary(selectedSem.number).then(maxLimit => {
+        if (semCredits > maxLimit) {
+          console.warn(`Semester ${selectedSem.number} exceeds credit limit: ${semCredits} > ${maxLimit}`);
+        }
+      });
     }
-  }, [view, selectedSem, semesterCredits, getMaxCreditsDisplay]);
-
-  // Fetch credit limit when component mounts
-  useEffect(() => {
-    if (user?.student_id) {
-      fetchCreditLimitFromSummary();
-    }
-  }, [user?.student_id, fetchCreditLimitFromSummary]);
-
-  // Also fetch when entering add/edit mode
-  useEffect(() => {
-    if (view === 'add' && user?.student_id) {
-      fetchCreditLimitFromSummary();
-    }
-  }, [view, user?.student_id, fetchCreditLimitFromSummary]);
+  }, [view, selectedSem, semesterCredits, fetchCreditLimitFromSummary]);
 
   const resetForm = () => {
     setCurrentSelection([]);
-    setSemStatus('Planned');
+    setSemStatus('Completed');
     setIsEditing(false);
     setSelectedSem(null);
     setView('list');
@@ -472,10 +437,10 @@ export const useStudyPlan = (user) => {
     curriculumPool, isDraggingOver, setIsDraggingOver, semesterCredits, courseCreditsMap,
     isSaving, pendingError, setPendingError, isGeneratingReport, expandedSem, setExpandedSem,
     creditLimitError, setCreditLimitError,
-    creditLimit, // Add this
+    creditLimit, // Keep this for backward compatibility
     gradeOptions, handleAddCourse, handleSaveAnywayWithCreditLimit, handleSaveSemester,
     handleGeneratePDF, fetchPool, resetForm, calculateCurrentCredits, getMaxCreditsDisplay,
     isExceedingLimit, getCleanPrereq, getGradeColor,
-    fetchCreditLimitFromSummary
+    fetchCreditLimitFromSummary  // Updated function
   };
 };

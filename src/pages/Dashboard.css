@@ -45,17 +45,19 @@
 
 .stat-card {
   background: #ffffff;
-  border-radius: 16px; /* Slightly smaller radius */
-  padding: 1.75rem 1.25rem; /* Reduced padding */
+  border-radius: 16px;
+  padding: 1.75rem 1.25rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
-  min-height: 120px; /* Reduced height */
+  min-height: 140px; /* Increased from 120px */
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  align-items: center; /* Center horizontally */
+  justify-content: center; /* Center vertically */
   position: relative;
   overflow: hidden;
   border: 3px solid #1e293b;
+  text-align: center; /* Center text alignment */
 }
 
 [data-theme="dark"] .stat-card {
@@ -89,12 +91,14 @@
 
 .stat-label {
   display: block;
-  font-size: 0.8rem; /* Slightly smaller */
+  font-size: 0.9rem; /* Increased from 0.8rem */
   font-weight: 800;
   color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 1px; /* Reduced spacing */
-  margin-bottom: 0.5rem; /* Reduced margin */
+  letter-spacing: 1px;
+  margin-bottom: 0.75rem; /* Increased margin for better spacing */
+  text-align: center;
+  width: 100%;
 }
 
 [data-theme="dark"] .stat-label {
@@ -102,10 +106,14 @@
 }
 
 .stat-value {
-  font-size: 2.25rem; /* Smaller font */
+  font-size: 3rem; /* Increased from 2.25rem */
   font-weight: 1000;
   color: #1e293b;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 [data-theme="dark"] .stat-value {
@@ -381,7 +389,7 @@
   }
   
   .stat-value {
-    font-size: 2rem;
+    font-size: 3rem;
   }
   
   .progress-section {
@@ -424,10 +432,108 @@
   }
   
   .stat-value {
-    font-size: 1.75rem;
+    font-size: 3rem;
   }
   
   .progress-labels span {
     font-size: 0.65rem;
   }
+}
+
+/* Add to Dashboard.css */
+/* Subtle warning styling */
+.degree-review-needed {
+  padding: 1rem;
+  background: rgba(245, 158, 11, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  margin-top: 1rem;
+}
+
+.degree-review-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.degree-review-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #F59E0B;
+  margin-top: 2px;
+}
+
+.degree-review-title {
+  color: #F59E0B;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.degree-review-message {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.semester-count-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.semester-count-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.semester-count-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.semester-count-value {
+  font-weight: 600;
+  color: #F59E0B;
+  font-size: 1.1rem;
+}
+
+.semester-count-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.semester-count-fill {
+  height: 100%;
+  background: #F59E0B;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.semester-count-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .degree-review-needed {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+[data-theme="dark"] .degree-review-message {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .semester-count-bar {
+  background: rgba(255, 255, 255, 0.15);
 }

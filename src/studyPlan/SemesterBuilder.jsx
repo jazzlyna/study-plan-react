@@ -1,5 +1,4 @@
-// SemesterBuilder.jsx - UPDATED with credit limit fix
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaTrash } from 'react-icons/fa';
 import './StudyPlan.css';
 
@@ -22,8 +21,12 @@ const SemesterBuilder = ({
   isExceedingLimit,
   gradeOptions,
   savedSemesters,
-  creditLimit // ADD THIS PROPS - use it directly
+  fetchCreditLimitFromSummary  // Get the fetch function from props
 }) => {
+  const [currentCreditLimit, setCurrentCreditLimit] = useState(15);
+  const [isLoadingLimit, setIsLoadingLimit] = useState(false);
+  const [creditLimitExceeded, setCreditLimitExceeded] = useState(false);
+
   const handleDrop = (e) => {
     setIsDraggingOver(false);
     const course = JSON.parse(e.dataTransfer.getData("course"));
@@ -32,8 +35,42 @@ const SemesterBuilder = ({
 
   const targetSemester = isEditing ? selectedSem?.number : savedSemesters.length + 1;
   const currentCredits = calculateCurrentCredits();
-  const maxLimit = creditLimit; // Use creditLimit directly instead of getMaxCreditsDisplay
-  const creditLimitExceeded = isExceedingLimit(currentCredits, targetSemester);
+
+  // FIX: Set initial status when editing
+  useEffect(() => {
+    if (isEditing && selectedSem?.status) {
+      setSemStatus(selectedSem.status);
+    }
+  }, [isEditing, selectedSem, setSemStatus]);
+
+  // Fetch credit limit from backend when component mounts or semester changes
+  useEffect(() => {
+    const fetchLimit = async () => {
+      if (!fetchCreditLimitFromSummary) return;
+      
+      setIsLoadingLimit(true);
+      try {
+        const limit = await fetchCreditLimitFromSummary(targetSemester);
+        setCurrentCreditLimit(limit);
+        
+        // Check if current credits exceed the limit
+        setCreditLimitExceeded(currentCredits > limit);
+      } catch (error) {
+        console.error("Error fetching credit limit:", error);
+        setCurrentCreditLimit(15); // Default fallback
+        setCreditLimitExceeded(currentCredits > 15);
+      } finally {
+        setIsLoadingLimit(false);
+      }
+    };
+
+    fetchLimit();
+  }, [targetSemester, fetchCreditLimitFromSummary, currentCredits]);
+
+  // Update credit limit exceeded check when currentCredits changes
+  useEffect(() => {
+    setCreditLimitExceeded(currentCredits > currentCreditLimit);
+  }, [currentCredits, currentCreditLimit]);
 
   return (
     <div 
@@ -54,7 +91,7 @@ const SemesterBuilder = ({
   
   <div className="builder-status-controls">
     <div className="status-toggle-group">
-  {['Planned', 'Current', 'Complete'].map(s => (
+  {['Planned', 'Current', 'Completed'].map(s => (
     <button 
       key={s} 
       type="button" 
@@ -68,7 +105,7 @@ const SemesterBuilder = ({
     
 <div className="builder-status-row">
   <div className={`credit-counter ${creditLimitExceeded ? 'warning' : ''}`}>
-    <span>{currentCredits}</span>/{maxLimit} Max
+    <span>{currentCredits}</span>/{isLoadingLimit ? '...' : currentCreditLimit} Max
     {creditLimitExceeded && (
       <div style={{ fontSize: '10px', marginTop: '5px' }}>
         Exceeds limit!
@@ -88,7 +125,7 @@ const SemesterBuilder = ({
               <tr className="builder-table-head">
                 <th style={{ textAlign: 'left', padding: '12px' }}>Course</th>
                 <th style={{ width: '80px' }}>Credits</th>
-                {semStatus === 'Complete' && <th style={{ width: '100px' }}>Grade</th>}
+                {semStatus === 'Completed' && <th style={{ width: '100px' }}>Grade</th>}
                 <th style={{ width: '50px' }}></th>
               </tr>
             </thead>
@@ -103,7 +140,7 @@ const SemesterBuilder = ({
                     {courseCreditsMap[course.course_code] || 3}
                   </td>
                   
-                  {semStatus === 'Complete' && (
+                  {semStatus === 'Completed' && (
                     <td style={{ textAlign: 'center' }}>
                       <select 
                         className="grade-select-small" 
@@ -114,8 +151,7 @@ const SemesterBuilder = ({
                               ? {...c, grade: e.target.value} 
                               : c
                           )
-                        )}
-                      >
+                        )} >
                         <option value="">-</option>
                         {gradeOptions.map(g => <option key={g} value={g}>{g}</option>)}
                       </select>

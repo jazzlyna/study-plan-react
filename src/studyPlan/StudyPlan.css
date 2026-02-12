@@ -1665,3 +1665,82 @@ body {
   font-size: 11px;
   line-height: 1.2;
 }
+
+/* ================================================== */
+/* 19. DEFERMENT MODAL STYLES                          */
+/* ================================================== */
+
+/* Deferment Modal - Left Aligned Text */
+.deferment-modal .modal-body-text {
+  text-align: left !important;
+}
+
+.deferment-modal .modal-body-text label {
+  text-align: left !important;
+  display: block !important;
+  font-weight: 500 !important;
+  margin-bottom: 8px !important;
+  color: var(--text-main) !important;
+}
+
+.deferment-modal .modal-content input[type="number"] {
+  text-align: left !important;
+  width: 100% !important;
+  padding: 10px 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-color) !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-main) !important;
+  font-size: 14px !important;
+}
+
+.deferment-modal .modal-footer {
+  justify-content: flex-end !important;
+}
+
+/* Light Mode Overrides for Deferment Modal */
+[data-theme="light"] .deferment-modal .modal-body-text,
+[data-theme="light"] .deferment-modal .modal-body-text label {
+  text-align: left !important;
+  color: #000000 !important;
+}
+
+[data-theme="light"] .deferment-modal .modal-content input[type="number"] {
+  background: rgb(255, 255, 255) !important;
+  border: 1px solid #000000 !important;
+  color: #000000 !important;
+  text-align: left !important;
+}
+
+[data-theme="light"] .deferment-modal .modal-content input[type="number"]::placeholder {
+  color: #666666 !important;
+}
+
+/* Add these to your deferment modal styles section */
+
+.deferment-input-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.deferment-input-group:last-of-type {
+  margin-bottom: 0;
+}
+
+.deferment-error {
+  padding: 10px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 8px;
+  color: #ff6b6b;
+  font-size: 14px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+[data-theme="light"] .deferment-error {
+  background: rgba(255, 0, 0, 0.1) !important;
+  border-color: rgba(255, 0, 0, 0.3) !important;
+  color: #ff0000 !important;
+}

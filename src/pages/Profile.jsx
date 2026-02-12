@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { FaEnvelope, FaCheck, FaCalendarAlt, FaCamera, FaIdBadge, FaBuilding } from 'react-icons/fa';
+import { FaEnvelope, FaCheck, FaCalendarAlt, FaCamera, FaIdBadge, FaBuilding, FaStethoscope, FaCalendarPlus } from 'react-icons/fa';
 import { api } from "../utils/api";
 import defaultAvatar from "../image/default_avatar.jpg";
 import './Profile.css';
@@ -20,7 +19,9 @@ function Profile({ user }) {
     intake_session: "",
     student_department: "",
     cgpa: "0.00",
-    credits: "0"
+    credits: "0",
+    deferment_medical: "0",
+    deferment_normal: "0"
   });
 
   useEffect(() => {
@@ -43,7 +44,9 @@ function Profile({ user }) {
           intake_session: (profileData.intake_session === "string" || !profileData.intake_session) ? "" : profileData.intake_session,
           student_department: profileData.student_department || "",
           cgpa: summaryData.student_cgpa?.toFixed(2) || "0.00",
-          credits: summaryData.count_completed_course || "0"
+          credits: summaryData.count_completed_course || "0",
+          deferment_medical: profileData.deferment_medical?.toString() || "0",
+          deferment_normal: profileData.deferment_normal?.toString() || "0"
         });
 
         // Store the GOT analysis if successful
@@ -72,7 +75,9 @@ function Profile({ user }) {
         student_image: formData.student_image,
         student_GOT: formData.student_GOT || null,
         intake_session: formData.intake_session || null,
-        student_department: formData.student_department || null
+        student_department: formData.student_department || null,
+        deferment_medical: parseInt(formData.deferment_medical) || 0,
+        deferment_normal: parseInt(formData.deferment_normal) || 0
       };
       await api.updateProfile(user.student_id, updatePayload);
       setIsEditing(false);
@@ -126,7 +131,6 @@ function Profile({ user }) {
               <p className="profile-stat-value">{formData.credits}</p>
             </div>
           </div>
-
           {/* Optional: Add Progress Bar here if desired, using gotAnalysis.progress_percentage */}
           {gotAnalysis && (
             <div className="profile-stat-mini-card" style={{ gridColumn: 'span 2' }}>
@@ -164,17 +168,17 @@ function Profile({ user }) {
                     className="profile-edit-input-center"
                     style={{ width: '100%' }}
                   >
-                    <option value="">Select Department</option>
-                    <option value="Chemical Engineering">Chemical Engineering</option>
-                    <option value="Civil Engineering">Civil Engineering</option>
-                    <option value="Electrical & Electronic Engineering">Electrical & Electronic Engineering</option>
-                    <option value="Mechanical Engineering">Mechanical Engineering</option>
-                    <option value="Petroleum Engineering">Petroleum Engineering</option>
-                    <option value="Computer Science">Computer Science</option>
-                    <option value="Information Technology">Information Technology</option>
-                    <option value="Business">Business</option>
-                    <option value="Science">Science</option>
-                    <option value="Other">Other</option>
+                        <option value="">Select Department</option>
+                        <option value="CE">Chemical Engineering</option>
+                        <option value="CEE">Civil & Environmental Engineering</option>
+                        <option value="EEE">Electrical & Electronic Engineering</option>
+                        <option value="IE">Integrated Engineering</option>
+                        <option value="ME">Mechanical Engineering</option>
+                        <option value="PE">Petroleum Engineering</option>
+                        <option value="FASD">Applied Science</option>
+                        <option value="GSC">Geosciences</option>
+                        <option value="DM">Management</option>
+                        <option value="Other">Other</option>
                   </select>
                 ) : (
                   <p className="profile-value">{formData.student_department || "Not Set"}</p>
@@ -190,6 +194,55 @@ function Profile({ user }) {
                   <input type="date" className="profile-date-input" style={{width: '100%'}} value={formData.intake_session} onChange={(e) => setFormData({ ...formData, intake_session: e.target.value })} />
                 ) : (
                   <p className="profile-value">{formData.intake_session || "Not Set"}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Deferment Fields */}
+            <div className="profile-info-item">
+              <div className="profile-icon-circle"><FaStethoscope /></div>
+              <div style={{ flex: 1 }}>
+                <label className="profile-label">Medical Deferment</label>
+                {isEditing ? (
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.deferment_medical}
+                      onChange={(e) => setFormData({ ...formData, deferment_medical: e.target.value })}
+                      className="profile-edit-input-center"
+                      style={{ width: '80px', textAlign: 'center' }}
+                    />
+                    <span style={{ fontSize: '12px', color: '#666' }}>semesters</span>
+                  </div>
+                ) : (
+                  <p className="profile-value">
+                    {formData.deferment_medical} semester{parseInt(formData.deferment_medical) !== 1 ? 's' : ''}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="profile-info-item">
+              <div className="profile-icon-circle"><FaCalendarPlus /></div>
+              <div style={{ flex: 1 }}>
+                <label className="profile-label">Regular Deferment</label>
+                {isEditing ? (
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.deferment_normal}
+                      onChange={(e) => setFormData({ ...formData, deferment_normal: e.target.value })}
+                      className="profile-edit-input-center"
+                      style={{ width: '80px', textAlign: 'center' }}
+                    />
+                    <span style={{ fontSize: '12px', color: '#666' }}>semesters</span>
+                  </div>
+                ) : (
+                  <p className="profile-value">
+                    {formData.deferment_normal} semester{parseInt(formData.deferment_normal) !== 1 ? 's' : ''}
+                  </p>
                 )}
               </div>
             </div>

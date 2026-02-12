@@ -173,15 +173,15 @@ function App() {
                         style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '2px solid var(--border-color)', background: 'var(--bg-primary)' }}
                       >
                         <option value="">Select Department</option>
-                        <option value="Chemical Engineering">Chemical Engineering</option>
-                        <option value="Civil Engineering">Civil Engineering</option>
-                        <option value="Electrical & Electronic Engineering">Electrical & Electronic Engineering</option>
-                        <option value="Mechanical Engineering">Mechanical Engineering</option>
-                        <option value="Petroleum Engineering">Petroleum Engineering</option>
-                        <option value="Computer Science">Computer Science</option>
-                        <option value="Information Technology">Information Technology</option>
-                        <option value="Business">Business</option>
-                        <option value="Science">Science</option>
+                        <option value="CE">Chemical Engineering</option>
+                        <option value="CEE">Civil & Environmental Engineering</option>
+                        <option value="EEE">Electrical & Electronic Engineering</option>
+                        <option value="IE">Integrated Engineering</option>
+                        <option value="ME">Mechanical Engineering</option>
+                        <option value="PE">Petroleum Engineering</option>
+                        <option value="FASD">Applied Science</option>
+                        <option value="GSC">Geosciences</option>
+                        <option value="DM">Management</option>
                         <option value="Other">Other</option>
                       </select>
                     </div>
