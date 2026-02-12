@@ -184,3 +184,57 @@
   color: white;
   background: rgba(255, 255, 255, 0.1);
 }
+
+/* ONE STAR in TOP RIGHT corner - Twinkling */
+.logo-star {
+  position: relative !important;
+  display: inline-block !important;
+}
+
+.logo-star::after {
+  content: "✨" !important;  /* Single star */
+  position: absolute !important;
+  top: -15px !important;
+  right: -15px !important;
+  opacity: 0 !important;
+  transition: all 0.3s ease !important;
+  font-size: 18px !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  transform: rotate(5deg) !important;
+  text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+.logo-container:hover .logo-star::after {
+  opacity: 1 !important;
+  top: -22px !important;
+  right: -22px !important;
+}
+
+/* Twinkling animation for ONE star */
+@keyframes single-star-twinkle {
+  0% { 
+    opacity: 0.7; 
+    transform: rotate(5deg) scale(1);
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+  }
+  50% { 
+    opacity: 1; 
+    transform: rotate(8deg) scale(1.4);
+    text-shadow: 0 0 15px rgba(255, 215, 0, 1), 0 0 25px gold;
+  }
+  100% { 
+    opacity: 0.7; 
+    transform: rotate(5deg) scale(1);
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+  }
+}
+
+.logo-container:hover .logo-star::after {
+  animation: single-star-twinkle 0.8s infinite !important;
+}
+
+/* Dark mode adjustment for star */
+[data-theme="dark"] .logo-star::after {
+  text-shadow: 0 0 12px #FFD700, 0 0 25px #FFA500 !important;
+}

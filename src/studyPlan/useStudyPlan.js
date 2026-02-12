@@ -186,8 +186,8 @@ export const useStudyPlan = (user) => {
         for (const course of currentSelection) {
           const payload = {
             course_code: String(course.course_code),
-            grade: semStatus === 'Complete' ? (course.grade || "") : "",
-            status: semStatus === 'Complete' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned'),
+            grade: semStatus === 'Completed' ? (course.grade || "") : "",
+            status: semStatus === 'Completed' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned'),
             semester: targetSemester
           };
           
@@ -210,8 +210,8 @@ export const useStudyPlan = (user) => {
               student_id: String(user.student_id).trim(),
               course_code: String(course.course_code),
               semester: targetSemester,
-              grade: semStatus === 'Complete' ? (course.grade || "") : "",
-              status: semStatus === 'Complete' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned')
+              grade: semStatus === 'Completed' ? (course.grade || "") : "",
+              status: semStatus === 'Completed' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned')
             });
           }
         }
@@ -222,8 +222,8 @@ export const useStudyPlan = (user) => {
             student_id: String(user.student_id).trim(),
             course_code: String(course.course_code),
             semester: targetSemester,
-            grade: semStatus === 'Complete' ? (course.grade || "") : "",
-            status: semStatus === 'Complete' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned')
+            grade: semStatus === 'Completed' ? (course.grade || "") : "",
+            status: semStatus === 'Completed' ? 'Completed' : (semStatus === 'Current' ? 'Current' : 'Planned')
           };
           
           await api.addCourse(payload);

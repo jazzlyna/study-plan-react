@@ -1,4 +1,6 @@
-/* AIAdvisor.css - Glassmorphism Style with Prominent (but not oversized) Button */
+/* AIAdvisor.css - ✨ CUTE BLUE BUTTON EDITION ✨ 
+   Adorable Blue Button + Original Popup Styling (No Pink!) */
+
 :root {
   --glass-bg: rgba(255, 255, 255, 0.6);
   --glass-border: rgba(0, 0, 0, 0.8);
@@ -6,6 +8,8 @@
   --glass-blur: blur(12px);
   --primary-glass: rgba(24, 0, 173, 0.1);
   --accent-blue: #1800ad;
+  --accent-light-blue: #4a6fa5;
+  --accent-soft-blue: #6d8eb0;
   --text-light: #000000;
   --text-dark: #1a1a2c;
   --border-light: rgba(0, 0, 0, 0.5);
@@ -16,94 +20,271 @@
   --icon-bg: rgba(255, 255, 255, 0.7);
 }
 
-/* ===== HIGHLY VISIBLE FLOATING ICON - PERFECTLY PROPORTIONED ===== */
+/* ===== 💙 SUPER CUTE BLUE FLOATING ICON - MAXIMUM CUTENESS 💙 ===== */
 .ai-advisor-icon {
   position: fixed;
   bottom: 30px;
   right: 30px;
-  width: 64px;  /* Reduced from 80px - more balanced */
-  height: 64px; /* Reduced from 80px - more balanced */
-  background: #1800ad; /* Solid, bold dark blue - max visibility */
+  width: 68px;
+  height: 68px;
+  background: linear-gradient(145deg, #4a8cff, #1a4eb0); /* Blue gradient! */
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  border-radius: 50%;
+  border-radius: 40% 60% 60% 40% / 40% 50% 50% 60%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 25px rgba(24, 0, 173, 0.6), 0 0 0 4px rgba(255, 255, 255, 0.9); /* Slightly tighter shadow */
-  border: 3px solid #ffffff; /* Thick white border - reduced from 4px */
+  box-shadow: 0 12px 25px rgba(26, 78, 176, 0.5), 
+              0 0 0 5px rgba(255, 255, 255, 0.95),
+              0 0 0 8px rgba(160, 200, 255, 0.4); /* Soft blue outer glow */
+  border: none;
   z-index: 10000;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  animation: pulse-glow 2s infinite ease-in-out, float 6s ease-in-out infinite;
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: blob-wiggle 4s ease-in-out infinite, sparkle-shine 3s infinite alternate;
 }
 
-@keyframes pulse-glow {
+@keyframes blob-wiggle {
   0%, 100% {
-    box-shadow: 0 8px 25px rgba(24, 0, 173, 0.6), 0 0 0 4px rgba(255, 255, 255, 0.9), 0 0 20px rgba(24, 0, 173, 0.7);
-    transform: scale(1);
+    border-radius: 40% 60% 60% 40% / 40% 50% 50% 60%;
+    transform: translateY(0px) rotate(-2deg);
+  }
+  25% {
+    border-radius: 50% 50% 45% 55% / 55% 45% 55% 45%;
+    transform: translateY(-6px) rotate(3deg);
   }
   50% {
-    box-shadow: 0 12px 35px rgba(24, 0, 173, 0.9), 0 0 0 5px rgba(255, 255, 255, 1), 0 0 35px #1800ad;
-    transform: scale(1.07); /* Slightly less dramatic pulse */
+    border-radius: 60% 40% 55% 45% / 50% 55% 45% 50%;
+    transform: translateY(-12px) rotate(0deg);
+  }
+  75% {
+    border-radius: 45% 55% 50% 50% / 45% 50% 50% 55%;
+    transform: translateY(-6px) rotate(-3deg);
   }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+@keyframes sparkle-shine {
+  from {
+    box-shadow: 0 12px 25px rgba(26, 78, 176, 0.5), 
+                0 0 0 5px rgba(255, 255, 255, 0.95),
+                0 0 0 8px rgba(160, 200, 255, 0.4);
+  }
+  to {
+    box-shadow: 0 15px 35px rgba(26, 78, 176, 0.7), 
+                0 0 0 5px rgba(255, 255, 255, 1),
+                0 0 0 12px rgba(180, 220, 255, 0.5);
+  }
 }
 
 .ai-advisor-icon:hover {
-  transform: scale(1.12) translateY(-5px);
-  background: #14008a;
-  border-color: #ffffff;
-  box-shadow: 0 16px 40px rgba(24, 0, 173, 0.9), 0 0 0 6px rgba(255, 255, 255, 0.95), 0 0 50px #1800ad;
+  transform: scale(1.18) translateY(-8px);
+  background: linear-gradient(145deg, #3a7ae0, #0f3a8a);
+  border-radius: 35% 65% 50% 50% / 45% 40% 60% 55%;
+  box-shadow: 0 20px 40px rgba(26, 78, 176, 0.8), 
+              0 0 0 6px rgba(255, 255, 255, 1),
+              0 0 0 15px rgba(160, 210, 255, 0.6);
   animation: none;
 }
 
 .ai-icon-content {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* 💙 Cute robot with animated face! */
 .ai-icon {
-  font-size: 36px; /* Reduced from 42px - better proportion for 64px button */
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  font-size: 40px;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.1));
   color: #ffffff;
+  animation: bounce-boop 1.8s ease-in-out infinite;
+  position: relative;
+  display: inline-block;
+  transform-origin: center;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
 }
 
-.ai-notification-dot {
+@keyframes bounce-boop {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg); 
+  }
+  30% { 
+    transform: scale(1.15) rotate(8deg); 
+  }
+  70% { 
+    transform: scale(0.92) rotate(-6deg); 
+  }
+}
+
+/* 💙 Cute blue-toned cheeks! (Softer, not pink) */
+.ai-icon-content::before,
+.ai-icon-content::after {
+  content: "⬤";
   position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 18px; /* Reduced from 22px - better proportion */
-  height: 18px; /* Reduced from 22px - better proportion */
-  background: #ff3300;
+  bottom: 2px;
+  width: 10px;
+  height: 10px;
+  background: #ffb7c5; /* Light pink */
   border-radius: 50%;
-  border: 2.5px solid #ffffff; /* Slightly thinner border */
-  animation: pulse-notification 1.5s infinite;
-  box-shadow: 0 0 18px rgba(255, 51, 0, 0.9);
+  color: transparent;
+  opacity: 0.9;
+  box-shadow: 0 0 12px #ffa5b4;
+  animation: blush-boop 2.2s ease-in-out infinite;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-@keyframes pulse-notification {
+.ai-icon-content::before {
+  left: 4px;
+  content: "⬤";
+  color: transparent;
+}
+
+.ai-icon-content::after {
+  right: 4px;
+  content: "⬤";
+  color: transparent;
+}
+
+@keyframes blush-boop {
   0%, 100% { 
     transform: scale(1); 
-    opacity: 1; 
-    box-shadow: 0 0 15px rgba(255, 51, 0, 0.8);
+    opacity: 0.8;
+    box-shadow: 0 0 8px #ffb6c1;
   }
   50% { 
-    transform: scale(1.25); 
-    opacity: 0.95; 
-    box-shadow: 0 0 25px rgba(255, 51, 0, 1);
+    transform: scale(1.3); 
+    opacity: 1;
+    box-shadow: 0 0 18px #ff8da1;
   }
 }
 
-/* ===== REST OF THE STYLES - BLACK BORDERS & FONTS ===== */
+/* ✨ Cute sparkles around the button */
+.ai-advisor-icon::after {
+  content: "✨";
+  position: absolute;
+  top: -15px;
+  right: -12px;
+  font-size: 24px;
+  color: #fff0b5;
+  animation: sparkle-twinkle 1.8s infinite;
+  text-shadow: 0 0 15px #ffe68f, 0 0 30px #ffd700;
+  transform: rotate(20deg);
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
+}
 
-/* Popup - Adjusted for slightly smaller button */
+@keyframes sparkle-twinkle {
+  0%, 100% { 
+    opacity: 0.9; 
+    transform: rotate(20deg) scale(1);
+  }
+  50% { 
+    opacity: 1; 
+    transform: rotate(35deg) scale(1.4);
+    text-shadow: 0 0 25px #ffe68f, 0 0 50px #ffb347;
+  }
+}
+
+/* 🌟 Another sparkle on the left! */
+.ai-advisor-icon::before {
+  content: "🌟";
+  position: absolute;
+  bottom: -12px;
+  left: -14px;
+  font-size: 20px;
+  color: #ffe0a3;
+  animation: sparkle-twinkle-left 2.2s infinite;
+  text-shadow: 0 0 12px #ffc96e;
+  transform: rotate(-15deg);
+  filter: drop-shadow(0 0 4px rgba(255, 200, 100, 0.6));
+}
+
+@keyframes sparkle-twinkle-left {
+  0%, 100% { 
+    opacity: 0.8; 
+    transform: rotate(-15deg) scale(0.9);
+  }
+  50% { 
+    opacity: 1; 
+    transform: rotate(0deg) scale(1.3);
+    text-shadow: 0 0 20px #ffdb8a;
+  }
+}
+
+/* 💙 Adorable notification dot - now a cute blue heart! */
+.ai-notification-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 22px;
+  height: 22px;
+  background: #ff4d6d; /* Red */
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  transform: rotate(45deg);
+  border: 3px solid #ffffff;
+  animation: heart-beep 1.2s ease-in-out infinite;
+  box-shadow: 0 0 25px rgba(255, 77, 109, 0.9);
+}
+
+/* Make it a perfect heart */
+.ai-notification-dot::before,
+.ai-notification-dot::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background: #ff4d6d; /* Red */
+  border-radius: 50%;
+  top: -11px;
+  left: 0;
+}
+
+.ai-notification-dot::before {
+  left: -11px;
+  top: 0;
+}
+
+.ai-notification-dot::after {
+  left: 0;
+  top: -11px;
+}
+
+@keyframes heart-beep {
+  0%, 100% { 
+    transform: rotate(45deg) scale(1);
+    box-shadow: 0 0 20px rgba(255, 77, 109, 0.9);
+  }
+  25% { 
+    transform: rotate(45deg) scale(1.25);
+    box-shadow: 0 0 35px rgba(255, 77, 109, 1);
+  }
+  35% { 
+    transform: rotate(45deg) scale(1);
+  }
+  45% { 
+    transform: rotate(45deg) scale(1.15);
+  }
+  55% { 
+    transform: rotate(45deg) scale(1);
+  }
+}
+
+/* 😊 Cute winking face on hover! */
+.ai-advisor-icon:hover .ai-icon {
+  content: "😊";
+  animation: none;
+  transform: scale(1.1);
+}
+
+/* ===== 📦 ORIGINAL POPUP STYLING - EXACTLY LIKE YOUR OLD CODE ===== */
+
+/* Popup - Original glassmorphism with black border */
 .ai-advisor-popup {
   position: fixed;
-  bottom: 110px; /* Adjusted back to original position */
+  bottom: 110px;
   right: 30px;
   width: 450px;
   max-height: 650px;
@@ -133,7 +314,7 @@
   }
 }
 
-/* Popup arrow - Black Border */
+/* Popup arrow - Original black border */
 .popup-arrow {
   position: absolute;
   bottom: -10px;
@@ -150,7 +331,7 @@
   border-radius: 0 0 8px 0;
 }
 
-/* Header - Black Border & Black Font */
+/* Header - Original styling with blue avatar */
 .ai-popup-header {
   padding: 20px 24px;
   background: rgba(255, 255, 255, 0.7);
@@ -171,7 +352,7 @@
 .ai-avatar {
   width: 52px;
   height: 52px;
-  background: #1800ad;
+  background: #1800ad; /* Original dark blue */
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   border-radius: 18px;
@@ -182,6 +363,7 @@
   box-shadow: 0 6px 16px rgba(24, 0, 173, 0.3);
   color: #ffffff;
   border: 2px solid #000000;
+  animation: none;
 }
 
 .ai-header-info {
@@ -196,6 +378,7 @@
   font-size: 1.3rem;
   letter-spacing: 0.5px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  text-shadow: none;
 }
 
 .ai-subtitle {
@@ -211,6 +394,7 @@
   gap: 10px;
 }
 
+/* Original button styling */
 .ai-refresh-btn,
 .ai-close-btn {
   background: rgba(255, 255, 255, 0.7);
@@ -228,6 +412,7 @@
   justify-content: center;
   transition: var(--transition-smooth);
   font-weight: 600;
+  box-shadow: none;
 }
 
 .ai-refresh-btn:hover:not(:disabled),
@@ -237,6 +422,12 @@
   transform: var(--hover-lift);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
   border-color: #000000;
+}
+
+.ai-refresh-btn:active,
+.ai-close-btn:active {
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
 .ai-refresh-btn:disabled {
@@ -250,7 +441,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Body */
+/* Body - Original */
 .ai-popup-body {
   flex: 1;
   overflow-y: auto;
@@ -260,7 +451,7 @@
   color: #000000;
 }
 
-/* Loading State - Black Font */
+/* Loading State - Original */
 .ai-loading-state {
   display: flex;
   flex-direction: column;
@@ -290,9 +481,10 @@
   margin: 0;
   font-weight: 700;
   letter-spacing: 0.5px;
+  animation: none;
 }
 
-/* Error State - Black Border & Black Font */
+/* Error State - Original */
 .ai-error-state {
   display: flex;
   flex-direction: column;
@@ -357,7 +549,7 @@
   border-color: #000000;
 }
 
-/* Empty State - Black Font */
+/* Empty State - Original */
 .ai-empty-state {
   display: flex;
   flex-direction: column;
@@ -381,6 +573,8 @@
   font-weight: 800;
   margin: 0 0 10px 0;
   letter-spacing: 1px;
+  font-family: 'Inter', sans-serif;
+  text-shadow: none;
 }
 
 .empty-description {
@@ -393,7 +587,7 @@
   opacity: 0.8;
 }
 
-/* Analysis Content */
+/* Analysis Content - Original */
 .ai-analysis-content {
   padding: 0;
   animation: fadeIn 0.7s ease-out;
@@ -411,7 +605,7 @@
   scroll-behavior: smooth;
 }
 
-/* Glass Scrollbar - Black Accent */
+/* Glass Scrollbar - Original */
 .analysis-scroll::-webkit-scrollbar {
   width: 10px;
 }
@@ -435,7 +629,7 @@
   background: #14008a;
 }
 
-/* Section Styles - Glass Cards with Black Border & Black Font */
+/* Section Styles - Original glass cards */
 .analysis-section {
   margin-bottom: 28px;
   padding: 24px;
@@ -513,6 +707,7 @@
   margin: 0;
   letter-spacing: 0.5px;
   font-family: 'Inter', -apple-system, sans-serif;
+  text-shadow: none;
 }
 
 .section-content {
@@ -538,9 +733,10 @@
   color: #1800ad;
   font-size: 22px;
   font-weight: bold;
+  animation: none;
 }
 
-/* Text formatting - Black Font */
+/* Text formatting - Original */
 .grade {
   background: #1800ad;
   backdrop-filter: none;
@@ -551,22 +747,28 @@
   margin: 0 3px;
   border: 1.5px solid #000000;
   display: inline-block;
+  box-shadow: none;
+  transform: none;
 }
 
 code {
-  background: rgba(24, 0, 173, 0.1);
+  background: rgba(24, 0, 173, 0.15);
   backdrop-filter: var(--glass-blur);
   color: #000000;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 40px;
-  font-family: 'Fira Code', monospace;
+  font-family: 'Fira Code', 'Courier New', monospace;
   font-weight: 700;
-  border: 1px solid #000000;
+  border: 1.5px solid #000000;
+  display: inline-block;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transform: none;
 }
 
 strong {
   color: #1800ad;
   font-weight: 900;
+  text-shadow: none;
 }
 
 em {
@@ -577,7 +779,7 @@ em {
   text-underline-offset: 4px;
 }
 
-/* Footer - Black Border & Black Font */
+/* Footer - Original */
 .ai-popup-footer {
   padding: 18px 24px;
   border-top: 3px solid #000000;
@@ -596,17 +798,17 @@ em {
   letter-spacing: 0.8px;
 }
 
-/* Responsive Design */
+/* Responsive Design - Original */
 @media (max-width: 768px) {
   .ai-advisor-icon {
     right: 20px;
     bottom: 20px;
-    width: 58px; /* Slightly smaller on mobile */
-    height: 58px;
+    width: 62px;
+    height: 62px;
   }
   
   .ai-icon {
-    font-size: 32px;
+    font-size: 36px;
   }
   
   .ai-advisor-popup {
@@ -634,12 +836,12 @@ em {
   .ai-advisor-icon {
     right: 15px;
     bottom: 15px;
-    width: 54px;
-    height: 54px;
+    width: 58px;
+    height: 58px;
   }
   
   .ai-icon {
-    font-size: 30px;
+    font-size: 32px;
   }
   
   .ai-advisor-popup {
@@ -682,18 +884,18 @@ em {
   }
 }
 
-/* Dark mode support */
+/* ===== 🌙 DARK MODE - ORIGINAL STYLING WITH COURSE CODE FIX ===== */
 [data-theme="dark"] {
-  --glass-bg: rgba(10, 10, 25, 0.6);
+  --glass-bg: rgba(10, 10, 25, 0.7);
   --glass-border: rgba(255, 255, 255, 0.5);
-  --card-bg: rgba(30, 30, 50, 0.5);
+  --card-bg: rgba(20, 20, 40, 0.6);
   --text-light: #ffffff;
 }
 
 [data-theme="dark"] .ai-advisor-icon {
-  background: #1800ad;
-  border-color: #ffffff;
-  box-shadow: 0 8px 25px rgba(24, 0, 173, 0.8), 0 0 0 4px rgba(255, 255, 255, 0.9), 0 0 30px #1800ad;
+  background: linear-gradient(145deg, #4a8cff, #1a4eb0);
+  border: none;
+  box-shadow: 0 12px 25px rgba(26, 78, 176, 0.6), 0 0 0 5px rgba(255, 255, 255, 0.9), 0 0 0 8px rgba(100, 150, 255, 0.5);
 }
 
 [data-theme="dark"] .ai-advisor-popup,
@@ -704,7 +906,7 @@ em {
 [data-theme="dark"] .ai-refresh-btn,
 [data-theme="dark"] .ai-close-btn {
   background: var(--glass-bg);
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.7);
   backdrop-filter: var(--glass-blur);
   color: #ffffff;
 }
@@ -714,6 +916,7 @@ em {
   background: #1800ad;
   border-color: #ffffff;
   color: #ffffff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="dark"] .ai-popup-header h4,
@@ -760,19 +963,46 @@ em {
 
 [data-theme="dark"] .section-paragraph::before {
   color: #ffffff;
+  content: '•';
 }
 
 [data-theme="dark"] .grade {
   background: #1800ad;
   border-color: #ffffff;
   color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== 🌟 DARK MODE - HIGHLY VISIBLE COURSE CODE FIX ===== */
+[data-theme="dark"] code {
+  background: #ffd700;
+  color: #000000;
+  border: 2px solid #ffffff;
+  font-weight: 800;
+  padding: 4px 14px;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  letter-spacing: 0.5px;
 }
 
 [data-theme="dark"] strong {
-  color: #ffffff;
+  color: #ffd700;
+  font-weight: 900;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
 }
 
 [data-theme="dark"] em {
   color: #ffffff;
-  text-decoration-color: #ffffff;
+  text-decoration-color: #ffd700;
+  text-decoration-thickness: 2px;
+}
+
+/* Fix for any inline code elements */
+[data-theme="dark"] p code,
+[data-theme="dark"] li code,
+[data-theme="dark"] span code {
+  background: #ffd700 !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
 }

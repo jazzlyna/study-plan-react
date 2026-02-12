@@ -17,10 +17,10 @@ function Navbar({ user, onLogout, onToggleTheme, currentTheme }) {
 
   return (
     <nav className="navbar">
-      {/* Left Group */}
+      {/* Left Group - WITH STARS ON LOGO TEXT */}
       <div className="logo-container" onClick={() => navigate('/Dashboard')}>
         <FaGraduationCap className="logo-icon" />
-        <span className="logo">STUDY PLAN</span>
+        <span className="logo logo-star">STUDY PLAN</span> 
       </div>
 
       {/* Right Group */}
@@ -40,7 +40,6 @@ function Navbar({ user, onLogout, onToggleTheme, currentTheme }) {
         <div className="divider-line" />
 
         <div className="controls-cluster">
-          {/* Theme Toggle - Hover interactive */}
           <button onClick={onToggleTheme} className="control-btn theme-toggle">
             {currentTheme === 'dark' ? 
               <FaSun style={{ color: '#FACC15' }} /> : 
@@ -48,7 +47,6 @@ function Navbar({ user, onLogout, onToggleTheme, currentTheme }) {
             }
           </button>
 
-          {/* Profile - Hover interactive */}
           <div className="user-profile-btn" onClick={() => navigate('/profile')}>
             <span className="user-name-text">
               {user?.student_name ? user.student_name.split(' ')[0] : 'User'}
@@ -56,7 +54,6 @@ function Navbar({ user, onLogout, onToggleTheme, currentTheme }) {
             <FaUser className="user-icon-branded" />
           </div>
 
-          {/* Logout - Branded Red */}
           <button onClick={onLogout} className="control-btn logout-btn" title="Logout">
             <FaPowerOff />
           </button>
