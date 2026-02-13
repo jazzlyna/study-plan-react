@@ -406,58 +406,43 @@ export const useStudyPlan = (user) => {
     }
   }, [user?.student_id]);
 
-  const fetchPool = useCallback(async (tabName) => {
-    const fetchMap = {
-      'All': () => api.getCourses(user?.student_id),
-      'NR': () => api.getNationalRequirementCourses(user.student_id),
-      'UR': () => api.getUniversityRequirementCourses(user.student_id),
-      'CC': () => api.getCommonCourses(user.student_id),
-      'CD': () => api.getCoreDisciplineCourses(user.student_id),
-      'Offshore': async () => {
-        const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-        return Array.isArray(allCourses) 
-          ? allCourses.filter(course => course.specialization === 'Offshore' || course.course_name?.includes('Offshore'))
-          : [];
-      },
-      'Environmental': async () => {
-        const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-        return Array.isArray(allCourses) 
-          ? allCourses.filter(course => course.specialization === 'Environmental' || course.course_name?.includes('Environmental'))
-          : [];
-      },
-      'Sustainability': async () => {
-        const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-        return Array.isArray(allCourses) 
-          ? allCourses.filter(course => course.specialization === 'Sustainability' || course.course_name?.includes('Sustainability'))
-          : [];
-      },
-      'Renewable Energy': async () => {
-        const allCourses = await api.getCoreSpecializationCourses(user.student_id);
-        return Array.isArray(allCourses) 
-          ? allCourses.filter(course => course.specialization === 'Renewable Energy' || course.course_name?.includes('Renewable'))
-          : [];
-      },
-    };
+const fetchPool = useCallback(async (tabName) => {
+  const fetchMap = {
+    'All': () => api.getCourses(user?.student_id),
+    'NR': () => api.getNationalRequirementCourses(user.student_id),
+    'UR': () => api.getUniversityRequirementCourses(user.student_id),
+    'CC': () => api.getCommonCourses(user.student_id),
+    'CD': () => api.getCoreDisciplineCourses(user.student_id),
+  };
+  
+  // For Core Specialisation main tab (no sub-tabs)
+  let fetchFunction;
+  
+  if (activeMainTab === 'spec') {
+    // When Core Specialisation is selected, fetch from CoreDiscipline endpoint
+    fetchFunction = () => api.getCoreSpecializationCourses(user.student_id);
+  } else {
     
-    const fetchFunction = fetchMap[tabName] || (() => api.getCourses());
+    fetchFunction = fetchMap[tabName] || (() => api.getCourses());
+  }
+  
+  try {
+    const data = await fetchFunction();
+    const rawList = Array.isArray(data) ? data : (data.courses || []);
+    const grouped = rawList.reduce((acc, course) => {
+      const sem = course.course_semester || 'Other';
+      if (!acc[sem]) acc[sem] = [];
+      acc[sem].push(course);
+      return acc;
+    }, {});
     
-    try {
-      const data = await fetchFunction();
-      const rawList = Array.isArray(data) ? data : (data.courses || []);
-      const grouped = rawList.reduce((acc, course) => {
-        const sem = course.course_semester || 'Other';
-        if (!acc[sem]) acc[sem] = [];
-        acc[sem].push(course);
-        return acc;
-      }, {});
-      
-      setCurriculumPool(grouped);
-      setExpandedSem(null);
-    } catch (err) { 
-      console.error("Error fetching pool:", err); 
-      setCurriculumPool({});
-    }
-  }, [user?.student_id]);
+    setCurriculumPool(grouped);
+    setExpandedSem(null);
+  } catch (err) { 
+    console.error("Error fetching pool:", err); 
+    setCurriculumPool({});
+  }
+}, [user?.student_id, activeMainTab]); 
 
   useEffect(() => { 
     fetchSemesterCredits(); 

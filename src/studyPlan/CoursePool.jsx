@@ -21,7 +21,17 @@ const CoursePool = ({
     fetchPool(tab);
   };
 
-  // Add this function to handle drag start
+  useEffect(() => {
+  if (activeMainTab === 'spec') {
+    
+    fetchPool('spec');
+  } else {
+    
+    fetchPool(activeSubTab);
+  }
+}, [activeMainTab, fetchPool, activeSubTab]);
+
+  
   const handleDragStart = (e, course) => {
     e.dataTransfer.setData("course", JSON.stringify(course));
   };
