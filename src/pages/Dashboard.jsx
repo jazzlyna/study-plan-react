@@ -15,7 +15,7 @@ function Dashboard({ user }) {
   const [particles, setParticles] = useState([]);
   const containerRef = useRef(null);
 
-  // Create floating particles
+  // floating particles
   useEffect(() => {
     const createParticles = () => {
       const newParticles = [];
@@ -57,7 +57,7 @@ function Dashboard({ user }) {
       try {
         setLoading(true);
         
-        // Fetch all data in parallel for better performance
+        // Fetch all data 
         const [summaryData, graduateOnTimeData] = await Promise.all([
           api.getCourseSummary(user.student_id),
           api.getGraduateOnTime(user.student_id)
@@ -107,7 +107,7 @@ function Dashboard({ user }) {
   
   const displayCourses = activeTab === "planned" ? plannedCourses : activeTab === "completed" ? completedCourses : currentCourses;
   
-  // Calculate GOT percentage from API response
+  // Get GOT percentage 
   const gotPercentage = graduateOnTime?.analysis?.progress_percentage || 0;
   const getGotColor = (percentage) => {
     if (percentage >= 80) return { main: "#4CAF50", glow: "rgba(76, 175, 80, 0.5)" };

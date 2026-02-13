@@ -4,25 +4,25 @@
   justify-content: space-between;
   align-items: center;
   max-width: 1050px;
-  padding: 20px 28px;
-  margin: 20px auto;
+  padding: 16px 24px;
+  margin: 16px auto;
   background: var(--bg-card);
   border: 3.5px solid #111827; 
   border-radius: 20px;
   position: sticky;
-  top: 20px;
+  top: 16px;
   z-index: 1000;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  
 }
 
 /* Logo Alignment */
 .logo-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   cursor: pointer;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
 .logo-container:hover {
@@ -30,15 +30,16 @@
 }
 
 .logo-icon {
-  font-size: 30px;
+  font-size: 28px;
   color: #1800ad;
 }
 
 .logo {
   font-weight: 900;
-  font-size: 20px;
+  font-size: 18px;
   color: #111827;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* Universal Hover & Interactive State */
@@ -73,6 +74,7 @@
   font-weight: 800;
   font-size: 13px;
   border-radius: 10px;
+  white-space: nowrap;
 }
 
 .nav-link:hover {
@@ -93,17 +95,20 @@
   height: 30px;
   background-color: #111827;
   margin: 0 8px;
+  flex-shrink: 0;
 }
 
 .navbar-actions-group {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 .controls-cluster {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 /* Generic Control Button (Theme & Logout) */
@@ -116,6 +121,7 @@
   border-radius: 12px;
   display: grid;
   place-items: center;
+  flex-shrink: 0;
 }
 
 .control-btn:hover {
@@ -125,7 +131,7 @@
 
 /* Logout Specific: Red Theme */
 .logout-btn {
-  color: #ef4444; /* Initial red icon */
+  color: #ef4444;
 }
 
 .logout-btn:hover {
@@ -145,6 +151,7 @@
   background: var(--bg-secondary);
   border: 2.5px solid #111827;
   border-radius: 12px;
+  flex-shrink: 0;
 }
 
 .user-profile-btn:hover {
@@ -153,8 +160,16 @@
   background: rgba(24, 0, 173, 0.05);
 }
 
-.user-name-text { font-weight: 800; color: #111827; }
-.user-icon-branded { color: #1800ad; }
+.user-name-text { 
+  font-weight: 800; 
+  color: #111827;
+  white-space: nowrap;
+}
+
+.user-icon-branded { 
+  color: #1800ad;
+  flex-shrink: 0;
+}
 
 /* --- DARK MODE ADJUSTMENTS --- */
 [data-theme="dark"] .navbar {
@@ -192,7 +207,7 @@
 }
 
 .logo-star::after {
-  content: "✨" !important;  /* Single star */
+  content: "✨" !important;
   position: absolute !important;
   top: -15px !important;
   right: -15px !important;
@@ -237,4 +252,266 @@
 /* Dark mode adjustment for star */
 [data-theme="dark"] .logo-star::after {
   text-shadow: 0 0 12px #FFD700, 0 0 25px #FFA500 !important;
+}
+
+/* ============ RESPONSIVE DESIGN ============ */
+
+/* Large Tablets (768px - 1023px) */
+@media screen and (max-width: 1023px) {
+  .navbar {
+    max-width: 90%;
+    padding: 14px 20px;
+    margin: 16px auto;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .navbar-actions-group {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .nav-links-pill {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .controls-cluster {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .divider-line {
+    display: none;
+  }
+
+  .logo {
+    font-size: 18px;
+  }
+
+  .logo-icon {
+    font-size: 26px;
+  }
+}
+
+/* Tablets & Small Laptops (640px - 767px) */
+@media screen and (max-width: 767px) {
+  .navbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    margin: 12px;
+    max-width: 100%;
+  }
+
+  .logo-container {
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .navbar-actions-group {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .nav-links-pill {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .nav-link {
+    flex: 1;
+    text-align: center;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .controls-cluster {
+    width: 100%;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .user-profile-btn {
+    flex: 1;
+    justify-content: space-between;
+    padding: 0 16px;
+  }
+
+  .user-name-text {
+    font-size: 14px;
+  }
+
+  .logo {
+    font-size: 16px;
+  }
+
+  .logo-icon {
+    font-size: 24px;
+  }
+
+  .control-btn {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+/* Mobile Phones (480px and below) */
+@media screen and (max-width: 480px) {
+  .navbar {
+    padding: 12px;
+    margin: 10px;
+    border-width: 3px;
+    border-radius: 18px;
+    top: 10px;
+  }
+
+  .logo-container {
+    gap: 8px;
+  }
+
+  .logo {
+    font-size: 14px;
+  }
+
+  .logo-icon {
+    font-size: 22px;
+  }
+
+  .logo-star::after {
+    font-size: 14px !important;
+    top: -12px !important;
+    right: -12px !important;
+  }
+
+  .nav-links-pill {
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .nav-link {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .user-profile-btn {
+    height: 40px;
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .user-name-text {
+    font-size: 12px;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .control-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .controls-cluster {
+    gap: 8px;
+  }
+}
+
+/* Small Mobile Phones (360px and below) */
+@media screen and (max-width: 360px) {
+  .navbar {
+    padding: 10px;
+  }
+
+  .controls-cluster {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .user-profile-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav-link {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .logo {
+    font-size: 13px;
+  }
+
+  .logo-icon {
+    font-size: 20px;
+  }
+}
+
+/* Landscape Mode for Mobile */
+@media screen and (max-height: 480px) and (orientation: landscape) {
+  .navbar {
+    margin: 10px auto;
+    padding: 12px 20px;
+  }
+
+  .navbar {
+    flex-direction: row;
+  }
+
+  .logo-container {
+    margin-bottom: 0;
+  }
+
+  .navbar-actions-group {
+    flex-direction: row;
+    width: auto;
+  }
+
+  .nav-links-pill {
+    width: auto;
+  }
+}
+
+/* High-DPI/Retina Screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .navbar {
+    border-width: 3px;
+  }
+  
+  .nav-links-pill,
+  .user-profile-btn,
+  .control-btn {
+    border-width: 2px;
+  }
+}
+
+/* Ensure touch targets are large enough for mobile */
+@media (hover: none) and (pointer: coarse) {
+  .nav-link,
+  .control-btn,
+  .user-profile-btn,
+  .logo-container {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .nav-link {
+    padding: 12px 16px;
+  }
+
+  /* Disable hover effects on touch devices */
+  .nav-link:hover,
+  .control-btn:hover,
+  .user-profile-btn:hover {
+    transform: none;
+  }
+
+  /* Keep active states for touch feedback */
+  .nav-link:active,
+  .control-btn:active,
+  .user-profile-btn:active {
+    transform: scale(0.96);
+  }
 }

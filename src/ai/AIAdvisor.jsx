@@ -21,7 +21,7 @@ function AIAdvisor({ user }) {
     }
   };
 
-  // Fixed parsing function - handles the **.** issue
+  
   const parseAnalysis = (text) => {
     if (!text || typeof text !== 'string') return [];
     
@@ -37,17 +37,16 @@ function AIAdvisor({ user }) {
     const parsedSections = [];
     let currentText = text;
     
-    // Process each section
     for (let i = 0; i < sectionTitles.length; i++) {
       const title = sectionTitles[i];
       const nextTitle = sectionTitles[i + 1];
       
-      // Look for the title with ** markers
+   
       const titlePattern = `**${title}**`;
       const titleIndex = currentText.indexOf(titlePattern);
       
       if (titleIndex === -1) {
-        // Try without markers
+        
         const altIndex = currentText.indexOf(title);
         if (altIndex === -1) {
           parsedSections.push({
@@ -62,18 +61,18 @@ function AIAdvisor({ user }) {
       const startIndex = titleIndex !== -1 ? titleIndex + titlePattern.length : 
                        currentText.indexOf(title) + title.length;
       
-      // Find where the content ends
+   
       let endIndex = currentText.length;
       
       if (nextTitle) {
-        // Look for the next title (with or without markers)
+        
         const nextTitlePattern = `**${nextTitle}**`;
         const nextIndex = currentText.indexOf(nextTitlePattern, startIndex);
         
         if (nextIndex !== -1) {
           endIndex = nextIndex;
         } else {
-          // Try without markers
+       
           const nextAltIndex = currentText.indexOf(nextTitle, startIndex);
           if (nextAltIndex !== -1) {
             endIndex = nextAltIndex;
@@ -84,14 +83,14 @@ function AIAdvisor({ user }) {
       // Extract the content
       let contentText = currentText.substring(startIndex, endIndex).trim();
       
-      // Clean up the content - remove leading colon, punctuation, and the problematic **.**
+      // Clean up the content - remove leading colon, punctuation, and  **.**
       contentText = contentText
         .replace(/^[:•\-*\s]+/, '') // Remove leading punctuation
-        .replace(/\*\*\.\*\*/g, '.') // Fix the **.** issue
-        .replace(/\*\*/g, '') // Remove any remaining **
+        .replace(/\*\*\.\*\*/g, '.') 
+        .replace(/\*\*/g, '') // Remove  **
         .trim();
       
-      // Split into meaningful paragraphs/sentences
+      // Split into paragraphs
       let content = [];
       
       if (contentText.length > 0) {

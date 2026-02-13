@@ -17,13 +17,13 @@ function Navbar({ user, onLogout, onToggleTheme, currentTheme }) {
 
   return (
     <nav className="navbar">
-      {/* Left Group - WITH STARS ON LOGO TEXT */}
+      {/* Left Group -logo */}
       <div className="logo-container" onClick={() => navigate('/Dashboard')}>
         <FaGraduationCap className="logo-icon" />
         <span className="logo logo-star">STUDY PLAN</span> 
       </div>
 
-      {/* Right Group */}
+      {/* Right Group - tab button*/}
       <div className="navbar-actions-group">
         <div className="nav-links-pill">
           {navLinks.map((link) => (

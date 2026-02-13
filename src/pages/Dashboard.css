@@ -1,46 +1,84 @@
 /* Reset margins and padding for dashboard */
 .dashboard-wrapper {
-  padding: 0.5rem 2rem 2rem 2rem !important; /* Reduced top padding */
+  padding: 0.5rem 2rem 2rem 2rem !important;
   margin-top: 0 !important;
   max-width: 1100px;
   margin: 0 auto;
-  min-height: calc(100vh - [navbar-height]);
-  position: relative; /* Adjust if you know navbar height */
+  min-height: calc(100vh - 100px);
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+/* Particles Container - Fixed positioning */
 .particles-container {
-  position: absolute;
-  margin-top: 5px;
+  position: fixed;
+  top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
   z-index: 0;
+  overflow: hidden;
 }
 
+/* Particle animations */
+.particle {
+  position: absolute;
+  background: linear-gradient(135deg, #1800ad, #3b82f6);
+  border-radius: 50%;
+  opacity: 0.15;
+  pointer-events: none;
+  animation: float linear infinite;
+  will-change: transform;
+}
 
+[data-theme="dark"] .particle {
+  background: linear-gradient(135deg, #60a5fa, #93c5fd);
+  opacity: 0.1;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(360deg);
+    opacity: 0.15;
+  }
+}
 
 .dashboard-title {
-  margin-top: 0.5rem !important; /* Reduced from 2.5rem */
+  margin-top: 0.5rem !important;
   padding-top: 0 !important;
   font-size: 2rem;
   font-weight: 900;
   color: #1e293b;
   margin-bottom: 2rem;
   text-transform: uppercase;
+  letter-spacing: -0.5px;
+  position: relative;
+  z-index: 1;
+  word-break: break-word;
 }
 
 [data-theme="dark"] .dashboard-title {
   color: #f1f5f9;
 }
 
-/* Stats Grid - Shorter Cards */
+/* Stats Grid - Fully Responsive */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Shorter width */
-  gap: 1.5rem; /* Reduced gap */
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
   margin-bottom: 2.5rem;
   margin-top: 15px;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-card {
@@ -48,41 +86,47 @@
   border-radius: 16px;
   padding: 1.75rem 1.25rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
-  min-height: 140px; /* Increased from 120px */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 140px;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center horizontally */
-  justify-content: center; /* Center vertically */
+  align-items: center;
+  justify-content: center;
   position: relative;
   overflow: hidden;
   border: 3px solid #1e293b;
-  text-align: center; /* Center text alignment */
+  text-align: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 [data-theme="dark"] .stat-card {
   background: #1f2937;
-  border: 3px solid #6b7280; /* Darker grey border for dark mode */
+  border: 3px solid #6b7280;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
 .stat-card:hover {
-  transform: translateY(-4px); /* Reduced hover effect */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  border-color: #1800ad;
+}
+
+[data-theme="dark"] .stat-card:hover {
+  border-color: #60a5fa;
 }
 
 /* Active stat card */
 .stat-card.active-stat {
   background: #1800ad;
-  border-color: #acbfd4;
+  border-color: #1800ad;
 }
 
 [data-theme="dark"] .stat-card.active-stat {
-  background: #60a5fa;
+  background: #2563eb;
   border-color: #60a5fa;
 }
-
-
 
 .stat-card.active-stat .stat-label,
 .stat-card.active-stat .stat-value {
@@ -91,12 +135,12 @@
 
 .stat-label {
   display: block;
-  font-size: 0.9rem; /* Increased from 0.8rem */
+  font-size: 0.9rem;
   font-weight: 800;
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 0.75rem; /* Increased margin for better spacing */
+  margin-bottom: 0.75rem;
   text-align: center;
   width: 100%;
 }
@@ -106,7 +150,7 @@
 }
 
 .stat-value {
-  font-size: 3rem; /* Increased from 2.25rem */
+  font-size: 3rem;
   font-weight: 1000;
   color: #1e293b;
   line-height: 1;
@@ -120,7 +164,7 @@
   color: #f1f5f9;
 }
 
-/* Progress Bar Section - Smaller */
+/* Progress Bar Section */
 .progress-section {
   background: #ffffff;
   border-radius: 16px;
@@ -128,19 +172,25 @@
   margin-bottom: 2.5rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border: 2px solid #1e293b;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 [data-theme="dark"] .progress-section {
   background: #1f2937;
-  border: 2px solid #6b7280; /* Darker grey border */
+  border: 2px solid #6b7280;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
 .progress-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .progress-title {
@@ -168,6 +218,7 @@
 
 .progress-percentage {
   text-align: right;
+  min-width: 120px;
 }
 
 .percentage-value {
@@ -178,7 +229,15 @@
   line-height: 1;
 }
 
-/* Progress Bar - Smaller */
+.percentage-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+}
+
+/* Progress Bar */
 .progress-bar-container {
   margin-top: 1rem;
 }
@@ -194,13 +253,13 @@
 
 [data-theme="dark"] .progress-bar-track {
   background: #374151;
-  border: 1px solid #6b7280; /* Darker grey border */
+  border: 1px solid #6b7280;
 }
 
 .progress-bar-fill {
   height: 100%;
   border-radius: 6px;
-  transition: width 0.5s ease;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .progress-labels {
@@ -215,31 +274,38 @@
   color: #94a3b8;
 }
 
-/* Tabs with prominent borders */
+/* Tab Container */
 .tab-container {
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
 }
 
 .tab-btn {
-  padding: 10px 24px; /* Smaller padding */
+  padding: 12px 24px;
   border-radius: 12px;
   background: #ffffff;
   color: #1e293b;
   font-weight: 800;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 0.85rem; /* Smaller font */
+  font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border: 2px solid #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 auto;
 }
 
 [data-theme="dark"] .tab-btn {
   background: #1f2937;
   color: #f1f5f9;
-  border: 2px solid #6b7280; /* Darker grey border */
+  border: 2px solid #6b7280;
 }
 
 .tab-btn.active {
@@ -247,7 +313,7 @@
   color: white;
   border-color: #3b82f6;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 [data-theme="dark"] .tab-btn.active {
@@ -255,35 +321,53 @@
   border-color: #60a5fa;
 }
 
-/* Course Table Section with prominent border */
+.tab-count {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+}
+
+.active .tab-count {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Course Table Section */
 .course-section {
   background: #ffffff;
   border-radius: 16px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border: 2px solid #1e293b;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 [data-theme="dark"] .course-section {
   background: #1f2937;
-  border: 2px solid #6b7280; /* Darker grey border */
+  border: 2px solid #6b7280;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
 .course-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 }
 
 .course-table th {
   background: #3b82f6;
   color: white;
   text-align: left;
-  padding: 1.25rem; /* Reduced padding */
+  padding: 1.25rem;
   font-weight: 800;
-  font-size: 0.85rem; /* Smaller font */
+  font-size: 0.85rem;
   text-transform: uppercase;
-  letter-spacing: 0.5px; /* Reduced spacing */
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 [data-theme="dark"] .course-table th {
@@ -291,11 +375,11 @@
 }
 
 .course-table td {
-  padding: 1.25rem; /* Reduced padding */
+  padding: 1.25rem;
   border-bottom: 1px solid #e5e7eb;
   color: #1e293b;
   font-weight: 500;
-  font-size: 0.9rem; /* Smaller font */
+  font-size: 0.9rem;
 }
 
 [data-theme="dark"] .course-table td {
@@ -317,13 +401,15 @@
 
 /* Status Badge */
 .status-badge {
-  padding: 5px 12px; /* Smaller padding */
+  padding: 5px 12px;
   border-radius: 20px;
-  font-size: 0.7rem; /* Smaller font */
+  font-size: 0.7rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border: 1px solid currentColor;
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .status-badge.planned {
@@ -344,16 +430,27 @@
   border-color: rgba(76, 175, 80, 0.3);
 }
 
+/* Grade Display */
+.grade-display {
+  font-weight: bold;
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* Skeleton Loading */
 .skeleton {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
   animation: loading 1.5s infinite;
   border-radius: 16px;
+  border: 3px solid #e2e8f0 !important;
 }
 
 [data-theme="dark"] .skeleton {
   background: linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%);
+  border-color: #4a5568 !important;
 }
 
 @keyframes loading {
@@ -361,87 +458,7 @@
   100% { background-position: -200% 0; }
 }
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard-wrapper {
-    padding: 1.5rem;
-  }
-  
-  .dashboard-title {
-    font-size: 1.75rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .stat-card {
-    padding: 1.5rem 1rem;
-    min-height: 110px;
-  }
-  
-  .stat-value {
-    font-size: 3rem;
-  }
-  
-  .progress-section {
-    padding: 1.25rem;
-  }
-  
-  .progress-title {
-    font-size: 1rem;
-  }
-  
-  .percentage-value {
-    font-size: 1.75rem;
-  }
-  
-  .tab-container {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .tab-btn {
-    width: 100%;
-    padding: 12px 20px;
-    text-align: center;
-  }
-  
-  .course-table th,
-  .course-table td {
-    padding: 1rem;
-    font-size: 0.85rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .dashboard-wrapper {
-    padding: 1rem;
-  }
-  
-  .dashboard-title {
-    font-size: 1.5rem;
-  }
-  
-  .stat-value {
-    font-size: 3rem;
-  }
-  
-  .progress-labels span {
-    font-size: 0.65rem;
-  }
-}
-
-/* Add to Dashboard.css */
-/* Subtle warning styling */
+/* ============ DEGREE REVIEW STYLES ============ */
 .degree-review-needed {
   padding: 1rem;
   background: rgba(245, 158, 11, 0.08);
@@ -473,9 +490,13 @@
 }
 
 .degree-review-message {
-  color: rgba(255, 255, 255, 0.8);
+  color: #64748b;
   font-size: 0.9rem;
   line-height: 1.4;
+}
+
+[data-theme="dark"] .degree-review-message {
+  color: #cbd5e1;
 }
 
 .semester-count-section {
@@ -489,11 +510,17 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .semester-count-label {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: #64748b;
+}
+
+[data-theme="dark"] .semester-count-label {
+  color: #94a3b8;
 }
 
 .semester-count-value {
@@ -504,9 +531,13 @@
 
 .semester-count-bar {
   height: 6px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 3px;
   overflow: hidden;
+}
+
+[data-theme="dark"] .semester-count-bar {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .semester-count-fill {
@@ -521,19 +552,356 @@
   justify-content: space-between;
   font-size: 0.75rem;
   margin-top: 0.5rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: #94a3b8;
 }
 
-/* Dark mode adjustments */
-[data-theme="dark"] .degree-review-needed {
-  background: rgba(245, 158, 11, 0.1);
-  border-color: rgba(245, 158, 11, 0.4);
+[data-theme="dark"] .semester-count-labels {
+  color: #6b7280;
 }
 
-[data-theme="dark"] .degree-review-message {
-  color: #cbd5e1;
+/* ============ RESPONSIVE DESIGN ============ */
+
+/* Large Tablets (1024px and below) */
+@media screen and (max-width: 1024px) {
+  .dashboard-wrapper {
+    padding: 0.5rem 1.5rem 1.5rem 1.5rem !important;
+    max-width: 100%;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .dashboard-title {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    min-height: 130px;
+    padding: 1.5rem 1rem;
+  }
+
+  .stat-value {
+    font-size: 2.75rem;
+  }
 }
 
-[data-theme="dark"] .semester-count-bar {
-  background: rgba(255, 255, 255, 0.15);
+/* Tablets (768px and below) */
+@media screen and (max-width: 768px) {
+  .dashboard-wrapper {
+    padding: 0.5rem 1rem 1.5rem 1rem !important;
+  }
+
+  .dashboard-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    min-height: 110px;
+    padding: 1.25rem 1rem;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .stat-label {
+    margin-bottom: 0;
+    width: auto;
+    font-size: 0.85rem;
+  }
+
+  .stat-value {
+    font-size: 2.5rem;
+    width: auto;
+  }
+
+  .progress-section {
+    padding: 1.25rem;
+  }
+
+  .progress-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .progress-percentage {
+    text-align: left;
+    width: 100%;
+  }
+
+  .percentage-value {
+    font-size: 1.75rem;
+  }
+
+  .tab-container {
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .tab-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 20px;
+  }
+
+  .course-section {
+    border-radius: 12px;
+  }
+
+  .course-table th,
+  .course-table td {
+    padding: 1rem;
+    font-size: 0.8rem;
+  }
+
+  .particle {
+    opacity: 0.08;
+  }
+}
+
+/* Mobile Phones (480px and below) */
+@media screen and (max-width: 480px) {
+  .dashboard-wrapper {
+    padding: 0.5rem 0.75rem 1rem 0.75rem !important;
+  }
+
+  .dashboard-title {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .stat-card {
+    min-height: 90px;
+    padding: 1rem;
+    border-width: 2.5px;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+  }
+
+  .progress-section {
+    padding: 1rem;
+    border-width: 2px;
+  }
+
+  .progress-title {
+    font-size: 1rem;
+  }
+
+  .progress-subtitle {
+    font-size: 0.75rem;
+  }
+
+  .percentage-value {
+    font-size: 1.5rem;
+  }
+
+  .percentage-label {
+    font-size: 0.65rem;
+  }
+
+  .progress-bar-track {
+    height: 8px;
+  }
+
+  .progress-labels {
+    font-size: 0.6rem;
+  }
+
+  .tab-btn {
+    padding: 10px 16px;
+    font-size: 0.75rem;
+    border-width: 2px;
+  }
+
+  .course-table {
+    min-width: 500px;
+  }
+
+  .course-table th {
+    padding: 0.875rem;
+    font-size: 0.75rem;
+  }
+
+  .course-table td {
+    padding: 0.875rem;
+    font-size: 0.75rem;
+  }
+
+  .status-badge {
+    padding: 4px 10px;
+    font-size: 0.65rem;
+  }
+
+  .degree-review-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .semester-count-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Small Mobile Phones (360px and below) */
+@media screen and (max-width: 360px) {
+  .dashboard-wrapper {
+    padding: 0.5rem 0.5rem 1rem 0.5rem !important;
+  }
+
+  .dashboard-title {
+    font-size: 1.1rem;
+  }
+
+  .stat-card {
+    min-height: 80px;
+    padding: 0.875rem;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+  }
+
+  .progress-section {
+    padding: 0.875rem;
+  }
+
+  .percentage-value {
+    font-size: 1.25rem;
+  }
+
+  .course-table {
+    min-width: 450px;
+  }
+
+  .course-table th,
+  .course-table td {
+    padding: 0.75rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* Landscape Mode */
+@media screen and (max-height: 480px) and (orientation: landscape) {
+  .dashboard-wrapper {
+    padding: 0.5rem 1.5rem !important;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .stat-card {
+    min-height: 80px;
+    flex-direction: column;
+  }
+
+  .particles-container {
+    opacity: 0.5;
+  }
+}
+
+/* Tablet Landscape (1024px and below, landscape) */
+@media screen and (max-width: 1024px) and (orientation: landscape) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* High-DPI/Retina Screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .stat-card,
+  .progress-section,
+  .course-section {
+    border-width: 2px;
+  }
+}
+
+/* Dark mode adjustments for responsive */
+@media (prefers-color-scheme: dark) {
+  [data-theme="dark"] .stat-card {
+    background: #1f2937;
+  }
+}
+
+/* Print styles */
+@media print {
+  .particles-container {
+    display: none;
+  }
+
+  .stat-card,
+  .progress-section,
+  .course-section {
+    break-inside: avoid;
+    border: 1px solid #000;
+    box-shadow: none;
+  }
+
+  .tab-btn {
+    display: none;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .stat-card:hover,
+  .tab-btn:hover {
+    transform: none;
+  }
+
+  .stat-card:active {
+    transform: scale(0.98);
+  }
+
+  .tab-btn:active {
+    transform: scale(0.96);
+  }
+
+  .course-table {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .stat-card,
+  .progress-bar-fill,
+  .particle,
+  .skeleton {
+    animation: none;
+    transition: none;
+  }
+
+  .particle {
+    display: none;
+  }
+}
+
+/* Container queries for component-level responsiveness */
+@container dashboard (max-width: 500px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
