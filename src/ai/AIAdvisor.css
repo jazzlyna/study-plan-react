@@ -107,40 +107,8 @@
   }
 }
 
-/* 💙 Solid blue cheeks - no glass */
-.ai-icon-content::before,
-.ai-icon-content::after {
-  content: "⬤";
-  position: absolute;
-  bottom: 2px;
-  width: 12px;
-  height: 12px;
-  background: #a0c0ff; /* SOLID SOFT BLUE */
-  border-radius: 50%;
-  color: transparent;
-  opacity: 0.9;
-  box-shadow: 0 0 15px rgba(24, 0, 173, 0.5);
-  animation: blush-boop 2.2s ease-in-out infinite;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
 
-.ai-icon-content::before {
-  left: 2px;
-  content: "⬤";
-  color: transparent;
-}
 
-.ai-icon-content::after {
-  right: 2px;
-  content: "⬤";
-  color: transparent;
-}
 
 @keyframes blush-boop {
   0%, 100% { 
@@ -185,7 +153,7 @@
 
 /* 🌟 Solid star sparkle - no glass */
 .ai-advisor-icon::before {
-  content: "🌟";
+  content: "✨";
   position: absolute;
   bottom: -15px;
   left: -17px;
@@ -260,7 +228,7 @@
   }
 }
 
-/* ===== 📦 FULL GLASS POPUP - CRYSTAL CLEAR (CONTENT ONLY) ===== */
+
 
 /* Popup - Full glassmorphism (CONTENT ONLY) */
 .ai-advisor-popup {
