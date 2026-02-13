@@ -28,7 +28,7 @@ function Profile({ user }) {
     const fetchAllData = async () => {
       if (!user?.student_id) return;
       try {
-        // Added api.getGraduateOnTime to the concurrent requests
+        
         const [profileData, summaryData, gotResponse] = await Promise.all([
           api.getProfile(user.student_id),
           api.getCourseSummary(user.student_id),
@@ -92,7 +92,7 @@ function Profile({ user }) {
       <h2 className="title-text">User Profile</h2>
       
       <div className="profile-main-grid">
-        {/* LEFT COLUMN - Avatar & Mini Stats */}
+        {/* LEFT COLUMN */}
         <div className="profile-left-column">
           <div className="profile-avatar-card">
             <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
@@ -131,7 +131,7 @@ function Profile({ user }) {
               <p className="profile-stat-value">{formData.credits}</p>
             </div>
           </div>
-          {/* Optional: Add Progress Bar here if desired, using gotAnalysis.progress_percentage */}
+
           {gotAnalysis && (
             <div className="profile-stat-mini-card" style={{ gridColumn: 'span 2' }}>
               <label className="profile-label">Degree Progress</label>

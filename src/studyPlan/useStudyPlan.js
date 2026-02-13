@@ -21,12 +21,11 @@ export const useStudyPlan = (user) => {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [expandedSem, setExpandedSem] = useState(null);
   const [creditLimitError, setCreditLimitError] = useState(null);
-  // SIMPLIFY: Use single credit limit for all semesters
   const [creditLimit, setCreditLimit] = useState(15);
   
   const gradeOptions = ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"];
 
-  // ===== NEW VALIDATION FUNCTION ADDED HERE =====
+
   const canSetSemesterStatus = useCallback((targetSemester, newStatus) => {
     // Get all semesters before the target semester
     const previousSemesters = savedSemesters
@@ -63,7 +62,7 @@ export const useStudyPlan = (user) => {
     
     return { allowed: true };
   }, [savedSemesters]);
-  // ===== END OF NEW VALIDATION FUNCTION =====
+ 
 
   const getCleanPrereq = (val) => {
     if (!val) return null;
@@ -71,23 +70,23 @@ export const useStudyPlan = (user) => {
     return ignore.includes(String(val).trim().toLowerCase()) ? null : String(val).trim();
   };
 
-  // UPDATED: Fetch credit limit directly from backend for specific semester
+  //  Fetch credit limit directly from backend for specific semester
   const fetchCreditLimitFromSummary = useCallback(async (semesterNumber) => {
     if (!user?.student_id) return 15;
     
     try {
       const standingData = await api.getSemesterStanding(user.student_id, semesterNumber);
       
-      // Use the max_limit directly from backend
+     
       if (standingData?.academic_meta?.max_limit !== undefined) {
         return standingData.academic_meta.max_limit;
       }
       
-      // Fallback to 15 if no data
+     
       return 15;
     } catch (err) {
       console.error("Error fetching credit limit from standing:", err);
-      // Default to 15 if there's an error
+     
       return 15;
     }
   }, [user?.student_id]);
@@ -97,7 +96,7 @@ export const useStudyPlan = (user) => {
       total + (courseCreditsMap[course.course_code] || 3), 0);
 
   const getMaxCreditsDisplay = useCallback(async (semesterNumber) => {
-    // Fetch directly from backend for this specific semester
+   
     return await fetchCreditLimitFromSummary(semesterNumber);
   }, [fetchCreditLimitFromSummary]);
 
@@ -146,19 +145,19 @@ export const useStudyPlan = (user) => {
     await handleSaveSemester(true);
   };
 
-  // UPDATED handleSaveSemester function with status validation
+ 
   const handleSaveSemester = async (bypass = false) => {
     const targetSemester = parseInt(isEditing ? selectedSem.number : savedSemesters.length + 1);
     
-    // ===== NEW VALIDATION CODE ADDED HERE =====
-    // Check if we're editing an existing semester
+  
+    
     if (isEditing) {
-      // Get the original status of the semester we're editing
+      
       const originalStatus = selectedSem.status;
       
-      // If status hasn't changed, skip the validation
+     
       if (originalStatus !== semStatus) {
-        // When editing, check all semesters BEFORE this one
+       
         const statusCheck = canSetSemesterStatus(targetSemester, semStatus);
         
         if (!statusCheck.allowed) {
@@ -167,7 +166,7 @@ export const useStudyPlan = (user) => {
         }
       }
     } else {
-      // For NEW semesters, validate against previous semesters
+      
       const statusCheck = canSetSemesterStatus(targetSemester, semStatus);
       
       if (!statusCheck.allowed) {
@@ -175,7 +174,7 @@ export const useStudyPlan = (user) => {
         return;
       }
     }
-    // ===== END OF NEW VALIDATION CODE =====
+    
     
     if (!bypass) {
       let errorMsg = null;
@@ -213,7 +212,7 @@ export const useStudyPlan = (user) => {
       }
       
       const currentCredits = calculateCurrentCredits();
-      // Fetch max limit directly from backend for this semester
+      // Fetch max limit 
       const maxLimit = await fetchCreditLimitFromSummary(targetSemester);
       
       if (currentCredits > maxLimit) {
@@ -228,15 +227,15 @@ export const useStudyPlan = (user) => {
     setCreditLimitError(null);
     
     try {
-      // NEW LOGIC: Use proper edit endpoint when editing
+      
       if (isEditing) {
-        // Track which courses need to be deleted (removed from selection)
+        
         const currentCourseCodes = currentSelection.map(c => c.course_code);
         const coursesToDelete = selectedSem.courses.filter(
           c => !currentCourseCodes.includes(c.course_code)
         );
         
-        // Delete courses that were removed
+        
         for (const courseToDelete of coursesToDelete) {
           await api.deleteCourse(
             user.student_id,
@@ -245,7 +244,7 @@ export const useStudyPlan = (user) => {
           );
         }
         
-        // Update or add each course in the current selection
+        
         for (const course of currentSelection) {
           const payload = {
             course_code: String(course.course_code),
@@ -254,7 +253,7 @@ export const useStudyPlan = (user) => {
             semester: targetSemester
           };
           
-          // Check if this course already exists in the semester
+          
           const courseExistsInOriginal = selectedSem.courses.some(
             c => c.course_code === course.course_code
           );
@@ -279,7 +278,7 @@ export const useStudyPlan = (user) => {
           }
         }
       } else {
-        // For NEW semesters, use the existing addCourse logic
+        
         for (const course of currentSelection) {
           const payload = {
             student_id: String(user.student_id).trim(),
@@ -293,7 +292,7 @@ export const useStudyPlan = (user) => {
         }
       }
       
-      // Refresh data after save
+      
       await fetchUserPlan();
       resetForm();
       
@@ -415,11 +414,11 @@ const fetchPool = useCallback(async (tabName) => {
     'CD': () => api.getCoreDisciplineCourses(user.student_id),
   };
   
-  // For Core Specialisation main tab (no sub-tabs)
+  
   let fetchFunction;
   
   if (activeMainTab === 'spec') {
-    // When Core Specialisation is selected, fetch from CoreDiscipline endpoint
+   
     fetchFunction = () => api.getCoreSpecializationCourses(user.student_id);
   } else {
     

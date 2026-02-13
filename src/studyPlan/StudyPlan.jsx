@@ -1,13 +1,13 @@
-import React, { useState } from 'react';  // Add useState import
+import React, { useState } from 'react';  
 import { 
   FaChevronLeft, FaEdit, FaTrash, FaExclamationTriangle, 
-  FaTimes, FaFilePdf, FaPlus, FaCalendarAlt  // Add FaCalendarAlt
+  FaTimes, FaFilePdf, FaPlus, FaCalendarAlt  
 } from 'react-icons/fa';
 import { api } from "../utils/api";
 import { generatePDFReport } from '../utils/reportGenerator';
 import './StudyPlan.css';
 
-// Import components and hook
+
 import { useStudyPlan } from './useStudyPlan';
 import SemesterCard from './SemesterCard';
 import CoursePool from './CoursePool';
@@ -15,7 +15,7 @@ import SemesterBuilder from './SemesterBuilder';
 
 function StudyPlan({ user }) {
   const {
-    // State
+    
     view,
     setView,
     savedSemesters,
@@ -75,7 +75,7 @@ function StudyPlan({ user }) {
   // Add state for credit limit warning
   const [creditWarning, setCreditWarning] = useState(null);
 
-  // Add missing handleDeleteSemester function
+  // Add handleDeleteSemester function
   const handleDeleteSemester = async () => {
     if (window.confirm(`Delete Semester ${selectedSem.number}?`)) {
       try {
@@ -114,10 +114,10 @@ const handleEditSemester = () => {
     setDefermentError('');
 
     try {
-      // First, get current profile data
+      
       const currentProfile = await api.getProfile(user.student_id);
       
-      // Prepare update data - using correct field names
+      // Prepare update data 
       const updateData = {
         ...currentProfile,
         deferment_medical: medDeferment,  
@@ -127,13 +127,12 @@ const handleEditSemester = () => {
       // Send update request
       await api.updateProfile(user.student_id, updateData);
       
-      // Close modal and reset - NO SUCCESS MESSAGE
+      // Close modal and reset 
       setShowDefermentModal(false);
       setMedicalDeferment('');
       setRegularDeferment('');
       
-      // Optional: You could add a subtle success indicator here if needed
-      // For example: setDefermentError(''); // Clear any errors
+    
       
     } catch (error) {
       console.error("Error saving deferment:", error);
@@ -147,12 +146,12 @@ const handleEditSemester = () => {
   const loadDefermentValues = async () => {
     try {
       const profile = await api.getProfile(user.student_id);
-      // Make sure we're using the correct field names from backend
+     
       setMedicalDeferment(profile.deferment_medical || '');
       setRegularDeferment(profile.deferment_normal || '');
     } catch (error) {
       console.error("Error loading deferment values:", error);
-      // Set defaults if error occurs
+      
       setMedicalDeferment('');
       setRegularDeferment('');
     }
@@ -374,7 +373,7 @@ const handleEditSemester = () => {
               />
             ))}
             
-            {/* Add New Semester Button - FIXED STYLING */}
+            {/* Add New Semester Button  */}
             <button 
               className="sem-button add-button"
               onClick={() => { resetForm(); setView('add'); }}
@@ -404,7 +403,7 @@ const handleEditSemester = () => {
               </div>
             </div>
             
-            {/* Credit Warning Display - FIXED */}
+            {/* Credit Warning Display */}
             {creditWarning && (
               <div style={{
                 backgroundColor: 'rgba(255, 107, 107, 0.1)',

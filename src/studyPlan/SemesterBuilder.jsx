@@ -36,14 +36,14 @@ const SemesterBuilder = ({
   const targetSemester = isEditing ? selectedSem?.number : savedSemesters.length + 1;
   const currentCredits = calculateCurrentCredits();
 
-  // FIX: Set initial status when editing
+  
   useEffect(() => {
     if (isEditing && selectedSem?.status) {
       setSemStatus(selectedSem.status);
     }
   }, [isEditing, selectedSem, setSemStatus]);
 
-  // Fetch credit limit from backend when component mounts or semester changes
+  // Fetch credit limit from backend 
   useEffect(() => {
     const fetchLimit = async () => {
       if (!fetchCreditLimitFromSummary) return;

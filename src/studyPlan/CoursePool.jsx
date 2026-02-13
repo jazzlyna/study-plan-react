@@ -1,4 +1,3 @@
-// CoursePool.jsx - FIXED VERSION with working search
 import React, { useEffect } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import './StudyPlan.css';
@@ -85,13 +84,13 @@ const CoursePool = ({
           Object.keys(curriculumPool)
             .sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0))
             .map(sem => {
-              // FILTER COURSES FIRST - Apply search filter to this semester's courses
+              //  Apply search filter to this semester's courses
               const filteredCourses = curriculumPool[sem].filter(c => 
                 c.course_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                 c.course_code?.toLowerCase().includes(searchQuery.toLowerCase())
               );
               
-              // Don't show semester if it has no matching courses and we're searching
+              // Don't show semester if it has no matching courses 
               if (searchQuery.trim() !== '' && filteredCourses.length === 0) {
                 return null;
               }
@@ -107,7 +106,7 @@ const CoursePool = ({
                     <span>{expandedSem === sem ? '−' : '+'}</span>
                   </div>
                   
-                  {/* SHOW COURSES WHEN: expanded OR when searching (always show results when searching) */}
+                  {/* SHOW COURSES WHEN: expanded OR when searching  */}
                   {(expandedSem === sem || searchQuery.trim() !== '') && (
                     <div className="semester-courses">
                       {filteredCourses.map(course => (

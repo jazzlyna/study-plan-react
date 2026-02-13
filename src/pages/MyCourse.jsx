@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaChevronLeft, FaChevronDown } from 'react-icons/fa'; // Added FaChevronDown
+import { FaSearch, FaChevronLeft, FaChevronDown } from 'react-icons/fa'; 
 import { api } from '../utils/api'; 
 import { supabase } from '../utils/api';
 import './MyCourse.css';
@@ -78,7 +78,7 @@ const filteredCourses = courses.filter(c => {
 if (selectedCourse) {
   return (
     <div className="course-container">
-      {/* Back button now uses CSS classes for light/dark visibility */}
+      {/* Back button */}
       <button className="back-btn" onClick={() => setSelectedCourse(null)}>
         <FaChevronLeft /> BACK TO CATALOG
       </button>
@@ -101,7 +101,7 @@ if (selectedCourse) {
           </div>
         </div>
 
-        {/* This panel is now White with Black Outline and Black Font per your request */}
+        
         <div className="detail-stats-panel">
           <div className="stat-row">
             <span className="stat-label">Code</span>
@@ -174,11 +174,11 @@ if (selectedCourse) {
             <input type="text" placeholder="Search code or name..." onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
           
-          {/* Custom Pretty Dropdown Wrapper */}
+         
           <div className="dropdown-wrapper">
             <select className="select-dropdown" value={semFilter} onChange={(e) => setSemFilter(e.target.value)}>
               <option value="All">Semester</option>
-              {/* Updated to 10 Semesters */}
+              
               {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={String(n)}>{n}</option>)}
             </select>
             <FaChevronDown className="dropdown-icon" />
