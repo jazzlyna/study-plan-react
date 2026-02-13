@@ -8,8 +8,7 @@ export default function MyCourse() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); 
-  const [activeGeneralType, setActiveGeneralType] = useState('All'); 
-  const [activeSpecSubTab, setActiveSpecSubTab] = useState('All'); 
+  const [activeGeneralType, setActiveGeneralType] = useState('All');  
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [semFilter, setSemFilter] = useState('All');
@@ -25,8 +24,7 @@ export default function MyCourse() {
     getSession();
   }, []);
 
-  const isAllSubtab = (activeTab === 'core' && activeGeneralType === 'All') || 
-                      (activeTab === 'spec' && activeSpecSubTab === 'All');
+const isAllSubtab = activeTab === 'core' && activeGeneralType === 'All';
 
   const fetchCourses = async () => {
 
@@ -67,18 +65,15 @@ export default function MyCourse() {
 
   useEffect(() => { 
     if (studentId) fetchCourses(); 
-  }, [studentId, activeTab, activeGeneralType, activeSpecSubTab]);
+ }, [studentId, activeTab, activeGeneralType]);
 
-  const filteredCourses = courses.filter(c => {
-    const searchMatch = (c.name + c.code).toLowerCase().includes(searchQuery.toLowerCase());
-    const semMatch = semFilter === 'All' || String(c.sem) === semFilter;
-    const specMatch = activeTab === 'spec' && activeSpecSubTab !== 'All'
-      ? (c.desc?.toLowerCase().includes(activeSpecSubTab.toLowerCase()) || 
-         c.name.toLowerCase().includes(activeSpecSubTab.toLowerCase()))
-      : true;
-    return searchMatch && semMatch && specMatch;
-  });
+const specMatch = true;
 
+const filteredCourses = courses.filter(c => {
+  const searchMatch = (c.name + c.code).toLowerCase().includes(searchQuery.toLowerCase());
+  const semMatch = semFilter === 'All' || String(c.sem) === semFilter;
+  return searchMatch && semMatch;
+});
 
 if (selectedCourse) {
   return (
@@ -141,17 +136,19 @@ if (selectedCourse) {
             <button className={`tab-btn ${activeTab === 'spec' ? 'active' : ''}`} onClick={() => setActiveTab('spec')}>Specialisation</button>
           </div>
 
-          <div className="sub-tab-group">
-            {(activeTab === 'core' ? ['All', 'NR', 'UR', 'CC', 'CD'] : ['All', 'Offshore', 'Environmental', 'Sustainability', 'Renewable']).map(t => (
-              <button 
-                key={t} 
-                className={`sub-tab-btn ${activeGeneralType === t || activeSpecSubTab === t ? 'active' : ''}`}
-                onClick={() => activeTab === 'core' ? setActiveGeneralType(t) : setActiveSpecSubTab(t)}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+{activeTab === 'core' && (
+  <div className="sub-tab-group">
+    {['All', 'NR', 'UR', 'CC', 'CD'].map(t => (
+      <button 
+        key={t} 
+        className={`sub-tab-btn ${activeGeneralType === t ? 'active' : ''}`}
+        onClick={() => setActiveGeneralType(t)}
+      >
+        {t}
+      </button>
+    ))}
+  </div>
+)}
         </div>
 
         <div className="filter-group">
