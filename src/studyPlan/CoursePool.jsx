@@ -68,19 +68,7 @@ const CoursePool = ({
         </div>
       )}
       
-      {activeMainTab === 'spec' && (
-        <div className="sub-tabs">
-          {['Offshore','Environmental','Sustainability','Renewable Energy'].map(sub => (
-            <button 
-              key={sub}
-              className={`sub-tab ${activeSubTab === sub ? 'active' : ''}`}
-              onClick={() => handleTabClick(sub)}
-            >
-              {sub}
-            </button>
-          ))}
-        </div>
-      )}
+
       
       <div className="pool-list-fixed">
         {Object.keys(curriculumPool).length > 0 ? (
