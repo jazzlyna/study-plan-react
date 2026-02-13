@@ -5,9 +5,9 @@ import Dashboard from "./pages/Dashboard";
 import MyCourse from "./pages/MyCourse";
 import Profile from "./pages/Profile";
 import StudyPlan from "./studyPlan/StudyPlan"; 
-import Login from "./pages/Login"; // Unified Landing Page
+import Login from "./pages/Login"; 
 import AIAdvisor from "./ai/AIAdvisor"; 
-import { supabase, api } from "./utils/api"; // Added api import
+import { supabase, api } from "./utils/api"; 
 import "./style.css";
 
 function App() {
@@ -86,7 +86,7 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- New Intake Save Logic ---
+  // ---  Intake Save Logic ---
   const handleSaveIntake = async () => {
     if (!intakeDate) return alert("Please select your intake date.");
     if (!department) return alert("Please select your department.");
@@ -140,13 +140,13 @@ function App() {
               
               <AIAdvisor user={user} />
 
-              {/* NEW MODAL UI */}
+             
               {showIntakeModal && (
                 <div className="modal-overlay">
                   <div className="modal-content">
                     <h2 style={{ color: 'var(--text-color)', marginBottom: '1rem' }}>Welcome!</h2>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                      Please provide your intake session date and department to help us track your academic progress.
+                      Please provide your intake session date and department to proceed.
                     </p>
                     
                     <div style={{ marginBottom: '1rem' }}>
