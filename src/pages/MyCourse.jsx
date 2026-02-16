@@ -80,7 +80,7 @@ if (selectedCourse) {
     <div className="course-container">
       {/* Back button */}
       <button className="back-btn" onClick={() => setSelectedCourse(null)}>
-        <FaChevronLeft /> BACK TO CATALOG
+        <FaChevronLeft /> BACK 
       </button>
 
       <div className="detail-card-layout">
@@ -127,7 +127,7 @@ if (selectedCourse) {
 
   return (
     <div className="course-container">
-      <h2 className="title-text">Course Catalog</h2>
+      <h2 className="title-text">My Course</h2>
 
       <div className="controls-wrapper">
         <div className="tabs-stack">
