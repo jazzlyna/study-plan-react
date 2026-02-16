@@ -169,16 +169,16 @@ function Profile({ user }) {
                     style={{ width: '100%' }}
                   >
                         <option value="">Select Department</option>
-                        <option value="CE">Chemical Engineering</option>
+                        <option value="CE" disabled>Chemical Engineering</option>
                         <option value="CEE">Civil & Environmental Engineering</option>
-                        <option value="EEE">Electrical & Electronic Engineering</option>
-                        <option value="IE">Integrated Engineering</option>
-                        <option value="ME">Mechanical Engineering</option>
-                        <option value="PE">Petroleum Engineering</option>
-                        <option value="FASD">Applied Science</option>
-                        <option value="GSC">Geosciences</option>
-                        <option value="DM">Management</option>
-                        <option value="Other">Other</option>
+                        <option value="EEE" disabled>Electrical & Electronic Engineering</option>
+                        <option value="IE" disabled>Integrated Engineering</option>
+                        <option value="ME" disabled>Mechanical Engineering</option>
+                        <option value="PE" disabled>Petroleum Engineering</option>
+                        <option value="FASD" disabled>Applied Science</option>
+                        <option value="GSC" disabled>Geosciences</option>
+                        <option value="DM" disabled>Management</option>
+                        <option value="Other" disabled>Other</option>
                   </select>
                 ) : (
                   <p className="profile-value">{formData.student_department || "Not Set"}</p>
