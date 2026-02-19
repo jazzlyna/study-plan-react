@@ -107,7 +107,17 @@ const LandingPage = () => {
             </a>
           </div>
         </div>
-        <h2 className="header-title">STUDY PLAN</h2>
+<div className="header-actions">
+    <h2 className="header-title">STUDY PLAN</h2>
+    <button 
+      className="btn-admin-add"
+      onClick={() => window.open("https://study-plan-add-course-by-department.vercel.app/", "_blank")}
+    >
+      Add New Course
+    </button>
+  </div>
+
+        
       </header>
 
       {/* Hero Section with Image on Right */}
@@ -127,7 +137,12 @@ const LandingPage = () => {
                   onClick={() => handleGoogleAuth('Sign Up')}
                   disabled={loading}
                 >
-                  <span className="google-icon">G</span>
+                  <span className="google-icon">
+  <img 
+    src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" 
+    alt="Google logo" 
+  />
+</span>
                   {loading ? "Connecting..." : "Get Started with Google"}
                 </button>
                 <button 
@@ -229,6 +244,7 @@ const LandingPage = () => {
             >
               I Already Have an Account
             </button>
+
           </div>
         </div>
       </section>

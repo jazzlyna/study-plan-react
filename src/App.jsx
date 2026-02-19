@@ -1,3 +1,5 @@
+
+// useState -> Hook to store data , useEffect -> run code when apps load
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";      
 import Navbar from "./components/Navbar";
@@ -11,7 +13,7 @@ import { supabase, api } from "./utils/api";
 import "./style.css";
 
 function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); //State variable
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState('dark');
   
