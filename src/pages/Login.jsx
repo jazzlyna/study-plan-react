@@ -234,7 +234,12 @@ const LandingPage = () => {
               onClick={() => handleGoogleAuth('Sign Up')}
               disabled={loading}
             >
-              <span className="google-icon">G</span>
+              <span className="google-icon">
+  <img 
+    src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" 
+    alt="Google logo" 
+  />
+</span>
               {loading ? "Connecting..." : "Get Started with Google"}
             </button>
             <button 
