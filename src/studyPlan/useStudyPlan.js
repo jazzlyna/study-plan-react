@@ -22,8 +22,36 @@ export const useStudyPlan = (user) => {
   const [expandedSem, setExpandedSem] = useState(null);
   const [creditLimitError, setCreditLimitError] = useState(null);
   const [creditLimit, setCreditLimit] = useState(15);
+  const [currentSemesterCourses, setCurrentSemesterCourses] = useState([]);
+  const [isLoadingSemesterDetail, setIsLoadingSemesterDetail] = useState(false);
   
-  const gradeOptions = ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"];
+  const gradeOptions = ["A", "A-", "B+", "B", "B-", "C+", "C", "D","D+","F"];
+
+
+  const fetchSemesterDetail = useCallback(async (semesterNumber) => {
+    if (!user?.student_id) return;
+    
+    setIsLoadingSemesterDetail(true);
+    try {
+      const courses = await api.getSemesterCourses(user.student_id, semesterNumber);
+      
+      const formattedCourses = courses.map(course => ({
+        course_code: course.course_code,
+        course_name: course.COURSE?.course_name || "Unknown",
+        grade: course.grade || "",
+        credit_hour: course.COURSE?.credit_hour || 0,
+        pre_requisite: course.COURSE?.pre_requisite || null
+      }));
+      
+      setCurrentSemesterCourses(formattedCourses);
+      return formattedCourses;
+    } catch (err) {
+      console.error(`Error fetching semester ${semesterNumber} details:`, err);
+      setCurrentSemesterCourses([]);
+    } finally {
+      setIsLoadingSemesterDetail(false);
+    }
+  }, [user?.student_id]);
 
 
   const canSetSemesterStatus = useCallback((targetSemester, newStatus) => {
@@ -40,7 +68,7 @@ export const useStudyPlan = (user) => {
     const prevStatus = latestPreviousSem.status?.toLowerCase() || '';
     
     // Validation rules:
-    // 1. If previous semester is 'planned' -> next semester cannot be 'current' or 'completed'
+    // If previous semester is 'planned' -> next semester cannot be 'current' or 'completed'
     if (prevStatus === 'planned') {
       if (newStatus === 'Current' || newStatus === 'Completed') {
         return {
@@ -50,7 +78,7 @@ export const useStudyPlan = (user) => {
       }
     }
     
-    // 2. If previous semester is 'current' -> next semester cannot be 'completed'
+    // If previous semester is 'current' -> next semester cannot be 'completed'
     if (prevStatus === 'current') {
       if (newStatus === 'Completed') {
         return {
@@ -70,7 +98,7 @@ export const useStudyPlan = (user) => {
     return ignore.includes(String(val).trim().toLowerCase()) ? null : String(val).trim();
   };
 
-  //  Fetch credit limit directly from backend for specific semester
+  //  Fetch credit limit  from backend for specific semester
   const fetchCreditLimitFromSummary = useCallback(async (semesterNumber) => {
     if (!user?.student_id) return 15;
     
@@ -91,9 +119,12 @@ export const useStudyPlan = (user) => {
     }
   }, [user?.student_id]);
 
-  const calculateCurrentCredits = () => 
-    currentSelection.reduce((total, course) => 
-      total + (courseCreditsMap[course.course_code] || 3), 0);
+const calculateCurrentCredits = () => 
+  currentSelection.reduce((total, course) => {
+    // If grade is 'F', add 0 credits to the total
+    const credits = course.grade === 'F' ? 0 : (courseCreditsMap[course.course_code] || 3);
+    return total + credits;
+  }, 0);
 
   const getMaxCreditsDisplay = useCallback(async (semesterNumber) => {
    
@@ -412,16 +443,16 @@ const fetchPool = useCallback(async (tabName) => {
     'UR': () => api.getUniversityRequirementCourses(user.student_id),
     'CC': () => api.getCommonCourses(user.student_id),
     'CD': () => api.getCoreDisciplineCourses(user.student_id),
+    'EM': () => api.getAllElectiveMinor(user.student_id),
+    'CI': () => api.getAllInternship(user.student_id),
   };
-  
-  
-  let fetchFunction;
+    
+let fetchFunction;
   
   if (activeMainTab === 'spec') {
-   
     fetchFunction = () => api.getCoreSpecializationCourses(user.student_id);
   } else {
-    
+    // This uses the tabName (e.g., 'EM' or 'IN') to pick the right API call from fetchMap
     fetchFunction = fetchMap[tabName] || (() => api.getCourses());
   }
   
@@ -488,6 +519,8 @@ const fetchPool = useCallback(async (tabName) => {
     gradeOptions, handleAddCourse, handleSaveAnywayWithCreditLimit, handleSaveSemester,
     handleGeneratePDF, fetchPool, resetForm, calculateCurrentCredits, getMaxCreditsDisplay,
     isExceedingLimit, getCleanPrereq, getGradeColor,
-    fetchCreditLimitFromSummary  
+    fetchCreditLimitFromSummary,    currentSemesterCourses,
+    isLoadingSemesterDetail,
+    fetchSemesterDetail
   };
 };

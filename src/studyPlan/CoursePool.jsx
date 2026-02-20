@@ -35,6 +35,16 @@ const CoursePool = ({
     e.dataTransfer.setData("course", JSON.stringify(course));
   };
 
+  const tabLabels = {
+  'All': 'All Courses',
+  'NR': 'National Requirement',
+  'UR': 'University Requirement',
+  'CC': 'Common Course',
+  'CD': 'Core Discipline',
+  'EM': 'Elective / Minor',
+  'CI': 'Internship'
+};
+
   return (
     <div className="glass-card pool-card">
       <div className="search-box">
@@ -63,13 +73,15 @@ const CoursePool = ({
         </button>
       </div>
       
-      {activeMainTab === 'core' && (
+     {activeMainTab === 'core' && (
         <div className="sub-tabs">
-          {['All','NR','UR','CC','CD'].map(sub => (
+          
+          {['All','NR','UR','CC','CD', 'EM', 'CI'].map(sub => (
             <button 
               key={sub}
               className={`sub-tab ${activeSubTab === sub ? 'active' : ''}`}
               onClick={() => handleTabClick(sub)}
+              title={tabLabels[sub]}
             >
               {sub}
             </button>

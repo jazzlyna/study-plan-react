@@ -62,7 +62,10 @@ function StudyPlan({ user }) {
     isExceedingLimit,
     getCleanPrereq,
     getGradeColor,
-    fetchCreditLimitFromSummary
+    fetchCreditLimitFromSummary,
+    currentSemesterCourses,
+    isLoadingSemesterDetail,
+    fetchSemesterDetail
   } = useStudyPlan(user);
 
   // Add state for deferment modal and inputs
@@ -369,7 +372,12 @@ const handleEditSemester = () => {
                 key={sem.number}
                 sem={sem}
                 semesterCredits={semesterCredits}
-                onClick={() => { setSelectedSem(sem); setView('view'); }}
+                        onClick={async () => { 
+          setSelectedSem(sem);
+          await fetchSemesterDetail(sem.number);  
+          setView('view');
+        }}
+
               />
             ))}
             
@@ -441,38 +449,40 @@ const handleEditSemester = () => {
               </div>
             </div>
             
-            <div className="table-container">
-              <div className="table-header">
-                <span>CODE</span>
-                <span>COURSE</span>
-                <span>CREDIT</span>
-                <span className="grade-header">GRADE</span>
-              </div>
-              
-              {selectedSem.courses.map(course => (
-                <div key={course.course_code} className="course-row">
-                  <div>
-                    <div className="course-code-cell">{course.course_code}</div>
-                  </div>
-                  <div>
-                    <div className="course-name-cell">{course.course_name}</div>
-                  </div>
-                  <div className="course-credit-cell">
-                    {courseCreditsMap[course.course_code] || 3}
-                  </div>
-                  <span 
-                    className="grade-display" 
-                    style={{ 
-                      color: getGradeColor(course.grade) 
-                    }}
-                  >
-                    {course.grade || '-'}
-                  </span>
-                </div>
-              ))}
+            {isLoadingSemesterDetail ? (
+      <div className="empty-state">Loading semester details...</div>
+    ) : (
+      <div className="table-container">
+        <div className="table-header">
+          <span>CODE</span>
+          <span>COURSE</span>
+          <span>CREDIT</span>
+          <span className="grade-header">GRADE</span>
+        </div>
+        
+        {currentSemesterCourses.map(course => (
+          <div key={course.course_code} className="course-row">
+            <div>
+              <div className="course-code-cell">{course.course_code}</div>
             </div>
+            <div>
+              <div className="course-name-cell">{course.course_name}</div>
+            </div>
+            <div className="course-credit-cell">
+              {course.credit_hour}
+            </div>
+            <span 
+              className="grade-display" 
+              style={{ color: getGradeColor(course.grade) }}
+            >
+              {course.grade || '-'}
+            </span>
           </div>
-        )}
+        ))}
+      </div>
+    )}
+  </div>
+)}
         
         {/* Add/Edit Semester View */}
         {view === 'add' && (

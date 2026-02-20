@@ -136,9 +136,13 @@ const SemesterBuilder = ({
                     <div style={{ fontWeight: 'bold', color: 'white' }}>{course.course_code}</div>
                     <div style={{ fontSize: '12px', color: '#aaa' }}>{course.course_name}</div>
                   </td>
-                  <td style={{ textAlign: 'center', color: '#64b5f6' }}>
-                    {courseCreditsMap[course.course_code] || 3}
-                  </td>
+                 <td style={{ 
+  textAlign: 'center', 
+  color: course.grade === 'F' ? '#ff5252' : '#64b5f6' 
+}}>
+  {/* Show 0 if grade is F, otherwise show the course credits */}
+  {course.grade === 'F' ? 0 : (courseCreditsMap[course.course_code] || 3)}
+</td>
                   
                   {semStatus === 'Completed' && (
                     <td style={{ textAlign: 'center' }}>

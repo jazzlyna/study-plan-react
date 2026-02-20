@@ -41,6 +41,8 @@ const isAllSubtab = activeTab === 'core' && activeGeneralType === 'All';
           case 'UR': data = await api.getAllUniversity(studentId); break;
           case 'CC': data = await api.getAllCommon(studentId); break;
           case 'CD': data = await api.getAllCoreDiscipline(studentId); break;
+          case 'EM': data = await api.getAllElectiveMinor(studentId); break; 
+          case 'CI': data = await api.getAllInternship(studentId); break;    
           default:   data = await api.getCourses(studentId); break;
         }
       }
@@ -125,6 +127,17 @@ if (selectedCourse) {
   );
 }
 
+
+const tabLabels = {
+  'All': 'All Courses',
+  'NR': 'National Requirement',
+  'UR': 'University Requirement',
+  'CC': 'Common Course',
+  'CD': 'Core Discipline',
+  'EM': 'Elective / Minor',
+  'CI': 'Internship'
+};
+
   return (
     <div className="course-container">
       <h2 className="title-text">My Course</h2>
@@ -136,13 +149,15 @@ if (selectedCourse) {
             <button className={`tab-btn ${activeTab === 'spec' ? 'active' : ''}`} onClick={() => setActiveTab('spec')}>Specialisation</button>
           </div>
 
+
 {activeTab === 'core' && (
   <div className="sub-tab-group">
-    {['All', 'NR', 'UR', 'CC', 'CD'].map(t => (
+    {['All', 'NR', 'UR', 'CC', 'CD', 'EM', 'CI'].map(t => (
       <button 
         key={t} 
         className={`sub-tab-btn ${activeGeneralType === t ? 'active' : ''}`}
         onClick={() => setActiveGeneralType(t)}
+        title={tabLabels[t]} // This adds the hover tooltip
       >
         {t}
       </button>

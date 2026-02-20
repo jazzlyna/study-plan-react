@@ -99,7 +99,7 @@ const LandingPage = () => {
             <a href="https://www.instagram.com/cee_utp?igsh=aGI0NTIwaWJxZm1v" target="_blank" rel="noopener noreferrer">
               <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="IG" />
             </a>
-            <a href="https://facebook.com/yourpage" target="_blank" rel="noopener noreferrer">
+            <a href="https://www.facebook.com/share/18DtptUKPz/" target="_blank" rel="noopener noreferrer">
               <img src="https://cdn-icons-png.flaticon.com/512/5968/5968764.png" alt="FB" />
             </a>
             <a href="https://www.tiktok.com/@cee.utp_25?_r=1&_t=ZS-93iScUmJnk4" target="_blank" rel="noopener noreferrer">

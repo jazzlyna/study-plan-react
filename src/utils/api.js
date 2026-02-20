@@ -63,6 +63,8 @@ getStudentPlan: (studentId) => fetchAPI(`/student_course/get/${studentId}`),
 getGPA: (studentId, semNum) => fetchAPI(`/student_course/GPA/${studentId}/${semNum}`),
 getSummary: (studentId) => fetchAPI(`/student_course/Summary/${studentId}`),
 getSemesterStanding: (studentId, semester) => fetchAPI(`/student_course/get/Standing/${studentId}/${semester}`),
+getSemesterCourses: (studentId, semester) => 
+  fetchAPI(`/student_course/get/SemesterCourse/${studentId}/${semester}`),
 
 
 getCourses: (studentId) => {
@@ -113,6 +115,8 @@ getPool: (endpoint) => fetchAPI(`/${endpoint}`),
   getAllCommon: (studentId) => fetchAPI(`/course/get/CommonCourse/${studentId}`),
   getAllCoreDiscipline: (studentId) => fetchAPI(`/course/get/CoreDiscipline/${studentId}`),
   getAllSpecialization: (studentId) => fetchAPI(`/course/get/CoreSpecialization/${studentId}`),
+  getAllElectiveMinor: (studentId) => fetchAPI(`/course/get/CourseAvailable/ElectiveMinor/${studentId}`),
+  getAllInternship: (studentId) => fetchAPI(`/course/get/CourseAvailable/CourseIntern/${studentId}`),  
 
   // --- AI ADVISOR ---
   getAIAnalysis: (studentId) => fetchAPI(`/advisor/ai-advisor/${studentId}`)
