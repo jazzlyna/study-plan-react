@@ -24,16 +24,220 @@ export const useStudyPlan = (user) => {
   const [creditLimit, setCreditLimit] = useState(15);
   const [currentSemesterCourses, setCurrentSemesterCourses] = useState([]);
   const [isLoadingSemesterDetail, setIsLoadingSemesterDetail] = useState(false);
+  const [semesterStandings, setSemesterStandings] = useState({});
+  
+  // New state for exemption
+  const [exemptionSemester, setExemptionSemester] = useState(null);
+  const [isExemptionView, setIsExemptionView] = useState(false);
   
   const gradeOptions = ["A", "A-", "B+", "B", "B-", "C+", "C", "D","D+","F"];
 
+  const fetchAllStandings = useCallback(async () => {
+    if (!user?.student_id || savedSemesters.length === 0) return;
+    
+    const standingsMap = {};
+    try {
+      await Promise.all(
+        savedSemesters.map(async (sem) => {
+          try {
+            const data = await api.getSemesterStanding(user.student_id, sem.number);
+            if (data && data.academic_meta) {
+              standingsMap[sem.number] = data.academic_meta;
+            }
+          } catch (err) {
+            console.error(`Error fetching standing for sem ${sem.number}:`, err);
+          }
+        })
+      );
+      
+      // fetch standing for exemption if it exists
+      if (exemptionSemester) {
+        try {
+          const data = await api.getSemesterStanding(user.student_id, 0);
+          if (data && data.academic_meta) {
+            standingsMap['EXEMPTION'] = data.academic_meta;
+          }
+        } catch (err) {
+          console.error("Error fetching standing for exemption:", err);
+        }
+      }
+      
+      setSemesterStandings(standingsMap);
+    } catch (err) {
+      console.error("Error in fetchAllStandings:", err);
+    }
+  }, [user?.student_id, savedSemesters, exemptionSemester]);
+
+  // Fetch exemption semester
+  const fetchExemptionSemester = useCallback(async () => {
+    if (!user?.student_id) return;
+    
+    try {
+      const data = await api.getStudentPlan(user.student_id);
+      
+      // Filter for exemption courses (using semester 0)
+      const exemptionCourses = data.filter(item => 
+        item.semester === 0
+      );
+      
+      if (exemptionCourses.length > 0) {
+        // Calculate total credits for exemption
+        const totalCredits = exemptionCourses.reduce((total, item) => {
+          return total + (item.COURSE?.credit_hour || 0);
+        }, 0);
+        
+        const exemptionSem = {
+          number: 'EXEMPTION',
+          status: 'Completed',
+          courses: exemptionCourses.map(item => ({
+            course_code: item.course_code,
+            course_name: item.COURSE?.course_name || "Unknown",
+            grade: 'Exemption',
+            pre_requisite: item.COURSE?.pre_requisite || null,
+            credit_hour: item.COURSE?.credit_hour || 0
+          })),
+          gpa: "N/A",
+          totalCredits: totalCredits
+        };
+        
+        setExemptionSemester(exemptionSem);
+        
+        // Also update semesterCredits for exemption
+        setSemesterCredits(prev => ({
+          ...prev,
+          'EXEMPTION': totalCredits
+        }));
+      } else {
+        setExemptionSemester(null);
+        // Remove exemption from semesterCredits if it exists
+        setSemesterCredits(prev => {
+          const newCredits = { ...prev };
+          delete newCredits['EXEMPTION'];
+          return newCredits;
+        });
+      }
+    } catch (err) { 
+      console.error("Error fetching exemption semester:", err); 
+    }
+  }, [user?.student_id]);
+
+  // Handle save exemption
+  const handleSaveExemption = async (bypass = false) => {
+    setIsSaving(true);
+    
+    try {
+      // First, delete any existing exemption courses
+      if (exemptionSemester) {
+        for (const course of exemptionSemester.courses) {
+          try {
+            await api.deleteCourse(
+              user.student_id,
+              course.course_code,
+              0
+            );
+          } catch (err) {
+            console.log(`Course ${course.course_code} may not exist or already deleted`);
+          }
+        }
+      }
+      
+      // Save new exemption courses
+      for (const course of currentSelection) {
+        const payload = {
+          student_id: String(user.student_id).trim(),
+          course_code: String(course.course_code),
+          semester: 0,
+          grade: 'Exemption',
+          status: 'Completed'
+        };
+        
+        await api.addCourse(payload);
+      }
+      
+      // Refresh data
+      await fetchExemptionSemester();
+      await fetchUserPlan();
+      await fetchAllStandings();
+      
+      // Return to list view
+      resetForm();
+      setIsExemptionView(false);
+      
+    } catch (error) {
+      console.error("Error saving exemption:", error);
+      alert("System Error: " + error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle edit exemption
+const handleEditExemption = () => {
+  if (exemptionSemester) {
+    // Ensure all courses have grade set to 'Exemption'
+    const coursesWithExemptionGrade = exemptionSemester.courses.map(course => ({
+      ...course,
+      grade: 'Exemption' // Force to Exemption
+    }));
+    setCurrentSelection(coursesWithExemptionGrade);
+    setIsEditing(true);
+    setIsExemptionView(true);
+    setView('add');
+  }
+};
+  // Handle delete exemption
+  const handleDeleteExemption = async () => {
+    if (window.confirm('Delete all exemption courses?')) {
+      setIsSaving(true);
+      try {
+        for (const course of exemptionSemester.courses) {
+          await api.deleteCourse(
+            user.student_id,
+            course.course_code,
+            0
+          );
+        }
+        
+        setExemptionSemester(null);
+        // Remove exemption from semesterCredits
+        setSemesterCredits(prev => {
+          const newCredits = { ...prev };
+          delete newCredits['EXEMPTION'];
+          return newCredits;
+        });
+        
+        resetForm();
+        setIsExemptionView(false);
+        
+        // Refresh standings
+        await fetchAllStandings();
+        
+      } catch (error) {
+        console.error("Error deleting exemption:", error);
+        alert("Failed to delete exemption courses. Please try again.");
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
 
   const fetchSemesterDetail = useCallback(async (semesterNumber) => {
     if (!user?.student_id) return;
     
     setIsLoadingSemesterDetail(true);
     try {
-      const courses = await api.getSemesterCourses(user.student_id, semesterNumber);
+      let courses;
+      
+      if (semesterNumber === 'EXEMPTION') {
+        if (exemptionSemester) {
+          setCurrentSemesterCourses(exemptionSemester.courses);
+          setIsLoadingSemesterDetail(false);
+          return;
+        }
+        courses = await api.getSemesterCourses(user.student_id, 0);
+      } else {
+        courses = await api.getSemesterCourses(user.student_id, semesterNumber);
+      }
       
       const formattedCourses = courses.map(course => ({
         course_code: course.course_code,
@@ -51,8 +255,7 @@ export const useStudyPlan = (user) => {
     } finally {
       setIsLoadingSemesterDetail(false);
     }
-  }, [user?.student_id]);
-
+  }, [user?.student_id, exemptionSemester]);
 
   const canSetSemesterStatus = useCallback((targetSemester, newStatus) => {
     // Get all semesters before the target semester
@@ -91,47 +294,52 @@ export const useStudyPlan = (user) => {
     return { allowed: true };
   }, [savedSemesters]);
  
-
   const getCleanPrereq = (val) => {
     if (!val) return null;
     const ignore = ["null", "none", "-", "", "undefined", "n/a", "[]"];
     return ignore.includes(String(val).trim().toLowerCase()) ? null : String(val).trim();
   };
 
-  //  Fetch credit limit  from backend for specific semester
-  const fetchCreditLimitFromSummary = useCallback(async (semesterNumber) => {
+  // Fetch credit limit from backend for specific semester
+ const fetchCreditLimitFromSummary = useCallback(async (semesterNumber) => {
+    // For exemption, return null to indicate no limit
+    if (semesterNumber === 'EXEMPTION' || semesterNumber === 0) {
+      return null;
+    }
+    
     if (!user?.student_id) return 15;
     
     try {
       const standingData = await api.getSemesterStanding(user.student_id, semesterNumber);
       
-     
       if (standingData?.academic_meta?.max_limit !== undefined) {
         return standingData.academic_meta.max_limit;
       }
       
-     
       return 15;
     } catch (err) {
       console.error("Error fetching credit limit from standing:", err);
-     
       return 15;
     }
   }, [user?.student_id]);
 
-const calculateCurrentCredits = () => 
-  currentSelection.reduce((total, course) => {
-    // If grade is 'F', add 0 credits to the total
-    const credits = course.grade === 'F' ? 0 : (courseCreditsMap[course.course_code] || 3);
-    return total + credits;
-  }, 0);
+  const calculateCurrentCredits = () => 
+    currentSelection.reduce((total, course) => {
+      // If grade is 'F', add 0 credits to the total
+      const credits = course.grade === 'F' ? 0 : (courseCreditsMap[course.course_code] || 3);
+      return total + credits;
+    }, 0);
 
   const getMaxCreditsDisplay = useCallback(async (semesterNumber) => {
-   
     return await fetchCreditLimitFromSummary(semesterNumber);
   }, [fetchCreditLimitFromSummary]);
 
   const isExceedingLimit = useCallback(async (currentCredits, semesterNumber) => {
+    // For exemption, never exceed limit
+    if (semesterNumber === 'EXEMPTION' || semesterNumber === 0) {
+      return false;
+    }
+    
     const maxLimit = await fetchCreditLimitFromSummary(semesterNumber);
     return currentCredits > maxLimit;
   }, [fetchCreditLimitFromSummary]);
@@ -151,6 +359,15 @@ const calculateCurrentCredits = () =>
         existingSemNumber = sem.number;
       }
     });
+    
+    // Also check exemption semester
+    if (exemptionSemester) {
+      const found = exemptionSemester.courses.find(c => c.course_code === course.course_code);
+      if (found) {
+        existingRecord = found;
+        existingSemNumber = 'EXEMPTION';
+      }
+    }
     
     if (existingRecord) {
       if (!existingRecord.grade || existingRecord.grade.trim() === "") {
@@ -176,19 +393,13 @@ const calculateCurrentCredits = () =>
     await handleSaveSemester(true);
   };
 
- 
   const handleSaveSemester = async (bypass = false) => {
     const targetSemester = parseInt(isEditing ? selectedSem.number : savedSemesters.length + 1);
     
-  
-    
     if (isEditing) {
-      
       const originalStatus = selectedSem.status;
       
-     
       if (originalStatus !== semStatus) {
-       
         const statusCheck = canSetSemesterStatus(targetSemester, semStatus);
         
         if (!statusCheck.allowed) {
@@ -197,7 +408,6 @@ const calculateCurrentCredits = () =>
         }
       }
     } else {
-      
       const statusCheck = canSetSemesterStatus(targetSemester, semStatus);
       
       if (!statusCheck.allowed) {
@@ -205,7 +415,6 @@ const calculateCurrentCredits = () =>
         return;
       }
     }
-    
     
     if (!bypass) {
       let errorMsg = null;
@@ -222,9 +431,18 @@ const calculateCurrentCredits = () =>
         for (const pCode of prereqs) {
           const cleanP = pCode.trim();
           const inSame = currentSelection.some(c => c.course_code === cleanP);
-          const hasPassed = savedSemesters.some(s => 
+          
+          // Check in regular semesters
+          const hasPassedRegular = savedSemesters.some(s => 
             s.courses.some(c => c.course_code === cleanP && c.grade && c.grade !== "" && c.grade !== "F")
           );
+          
+          // Check in exemption semester
+          const hasPassedExemption = exemptionSemester?.courses.some(c => 
+            c.course_code === cleanP && c.grade === 'Exemption'
+          );
+          
+          const hasPassed = hasPassedRegular || hasPassedExemption;
 
           if (inSame) {
             errorMsg = `Case A: [${course.course_code}] and its prerequisite [${cleanP}] are in the same semester. You need chair approval / chair approval and an attempt to [${cleanP}].`;
@@ -243,10 +461,9 @@ const calculateCurrentCredits = () =>
       }
       
       const currentCredits = calculateCurrentCredits();
-      // Fetch max limit 
       const maxLimit = await fetchCreditLimitFromSummary(targetSemester);
       
-      if (currentCredits > maxLimit) {
+      if (maxLimit !== null && currentCredits > maxLimit) {
         errorMsg = `You have selected ${currentCredits} credits, which exceeds the maximum allowed of ${maxLimit} credits for this semester.`;
         setCreditLimitError(errorMsg);
         return;
@@ -258,14 +475,11 @@ const calculateCurrentCredits = () =>
     setCreditLimitError(null);
     
     try {
-      
       if (isEditing) {
-        
         const currentCourseCodes = currentSelection.map(c => c.course_code);
         const coursesToDelete = selectedSem.courses.filter(
           c => !currentCourseCodes.includes(c.course_code)
         );
-        
         
         for (const courseToDelete of coursesToDelete) {
           await api.deleteCourse(
@@ -275,7 +489,6 @@ const calculateCurrentCredits = () =>
           );
         }
         
-        
         for (const course of currentSelection) {
           const payload = {
             course_code: String(course.course_code),
@@ -284,13 +497,11 @@ const calculateCurrentCredits = () =>
             semester: targetSemester
           };
           
-          
           const courseExistsInOriginal = selectedSem.courses.some(
             c => c.course_code === course.course_code
           );
           
           if (courseExistsInOriginal) {
-            // Update existing course
             await api.updateStudentCourse(
               user.student_id,
               course.course_code,
@@ -298,7 +509,6 @@ const calculateCurrentCredits = () =>
               payload
             );
           } else {
-            // Add new course to the semester
             await api.addCourse({
               student_id: String(user.student_id).trim(),
               course_code: String(course.course_code),
@@ -309,7 +519,6 @@ const calculateCurrentCredits = () =>
           }
         }
       } else {
-        
         for (const course of currentSelection) {
           const payload = {
             student_id: String(user.student_id).trim(),
@@ -322,7 +531,6 @@ const calculateCurrentCredits = () =>
           await api.addCourse(payload);
         }
       }
-      
       
       await fetchUserPlan();
       resetForm();
@@ -337,9 +545,14 @@ const calculateCurrentCredits = () =>
 
   const getGradeColor = (grade) => {
     const map = {
-      'A': '#4CAF50', 'B': '#CDDC39', 'C': '#FF9800', 'D': '#FF5722', 'F': '#F44336'
+      'A': '#4CAF50', 
+      'B': '#CDDC39', 
+      'C': '#FF9800', 
+      'D': '#FF5722', 
+      'F': '#F44336',
+      'Exemption': '#8b5cf6'
     };
-    return map[grade?.charAt(0)] || '#888';
+    return map[grade] || '#888';
   };
 
   const handleGeneratePDF = async () => {
@@ -368,7 +581,11 @@ const calculateCurrentCredits = () =>
     
     try {
       const data = await api.getStudentPlan(user.student_id);
-      const grouped = data.reduce((acc, item) => {
+      
+      // Filter out semester 0 (exemption) from regular semesters
+      const regularSemesters = data.filter(item => item.semester !== 0);
+      
+      const grouped = regularSemesters.reduce((acc, item) => {
         if (!acc[item.semester]) {
           acc[item.semester] = { 
             number: item.semester, 
@@ -382,7 +599,8 @@ const calculateCurrentCredits = () =>
           course_code: item.course_code,
           course_name: item.COURSE?.course_name || "Unknown",
           grade: item.grade || "",
-          pre_requisite: item.COURSE?.pre_requisite || null
+          pre_requisite: item.COURSE?.pre_requisite || null,
+          credit_hour: item.COURSE?.credit_hour || 0
         });
         
         return acc;
@@ -436,61 +654,64 @@ const calculateCurrentCredits = () =>
     }
   }, [user?.student_id]);
 
-const fetchPool = useCallback(async (tabName) => {
-  const fetchMap = {
-    'All': () => api.getCourses(user?.student_id),
-    'NR': () => api.getNationalRequirementCourses(user.student_id),
-    'UR': () => api.getUniversityRequirementCourses(user.student_id),
-    'CC': () => api.getCommonCourses(user.student_id),
-    'CD': () => api.getCoreDisciplineCourses(user.student_id),
-    'EM': () => api.getAllElectiveMinor(user.student_id),
-    'CI': () => api.getAllInternship(user.student_id),
-  };
+  const fetchPool = useCallback(async (tabName) => {
+    const fetchMap = {
+      'All': () => api.getCourses(user?.student_id),
+      'NR': () => api.getNationalRequirementCourses(user.student_id),
+      'UR': () => api.getUniversityRequirementCourses(user.student_id),
+      'CC': () => api.getCommonCourses(user.student_id),
+      'CD': () => api.getCoreDisciplineCourses(user.student_id),
+      'EM': () => api.getAllElectiveMinor(user.student_id),
+      'CI': () => api.getAllInternship(user.student_id),
+    };
     
-let fetchFunction;
-  
-  if (activeMainTab === 'spec') {
-    fetchFunction = () => api.getCoreSpecializationCourses(user.student_id);
-  } else {
-    // This uses the tabName (e.g., 'EM' or 'IN') to pick the right API call from fetchMap
-    fetchFunction = fetchMap[tabName] || (() => api.getCourses());
-  }
-  
-  try {
-    const data = await fetchFunction();
-    const rawList = Array.isArray(data) ? data : (data.courses || []);
-    const grouped = rawList.reduce((acc, course) => {
-      const sem = course.course_semester || 'Other';
-      if (!acc[sem]) acc[sem] = [];
-      acc[sem].push(course);
-      return acc;
-    }, {});
+    let fetchFunction;
     
-    setCurriculumPool(grouped);
-    setExpandedSem(null);
-  } catch (err) { 
-    console.error("Error fetching pool:", err); 
-    setCurriculumPool({});
-  }
-}, [user?.student_id, activeMainTab]); 
+    if (activeMainTab === 'spec') {
+      fetchFunction = () => api.getCoreSpecializationCourses(user.student_id);
+    } else {
+      fetchFunction = fetchMap[tabName] || (() => api.getCourses());
+    }
+    
+    try {
+      const data = await fetchFunction();
+      const rawList = Array.isArray(data) ? data : (data.courses || []);
+      const grouped = rawList.reduce((acc, course) => {
+        const sem = course.course_semester || 'Other';
+        if (!acc[sem]) acc[sem] = [];
+        acc[sem].push(course);
+        return acc;
+      }, {});
+      
+      setCurriculumPool(grouped);
+      setExpandedSem(null);
+    } catch (err) { 
+      console.error("Error fetching pool:", err); 
+      setCurriculumPool({});
+    }
+  }, [user?.student_id, activeMainTab]); 
+
+  useEffect(() => {
+    fetchAllStandings();
+  }, [savedSemesters, exemptionSemester, fetchAllStandings]);
 
   useEffect(() => { 
     fetchSemesterCredits(); 
     fetchCourseCredits(); 
     fetchUserPlan();
-  }, [fetchSemesterCredits, fetchCourseCredits, fetchUserPlan]);
+    fetchExemptionSemester();
+  }, [fetchSemesterCredits, fetchCourseCredits, fetchUserPlan, fetchExemptionSemester]);
 
   useEffect(() => { 
-    if (view === 'add') fetchPool(activeSubTab); 
-  }, [activeSubTab, view, fetchPool]);
+    if (view === 'add' && !isExemptionView) fetchPool(activeSubTab); 
+  }, [activeSubTab, view, fetchPool, isExemptionView]);
 
   // Check for existing limit violations when viewing semesters
   useEffect(() => {
     if (view === 'view' && selectedSem) {
       const semCredits = semesterCredits[selectedSem.number] || 0;
-      // Fetch max limit for this semester
       fetchCreditLimitFromSummary(selectedSem.number).then(maxLimit => {
-        if (semCredits > maxLimit) {
+        if (maxLimit !== null && semCredits > maxLimit) {
           console.warn(`Semester ${selectedSem.number} exceeds credit limit: ${semCredits} > ${maxLimit}`);
         }
       });
@@ -502,6 +723,7 @@ let fetchFunction;
     setSemStatus('Completed');
     setIsEditing(false);
     setSelectedSem(null);
+    setIsExemptionView(false);
     setView('list');
     setSearchQuery('');
     setPendingError(null);
@@ -519,8 +741,16 @@ let fetchFunction;
     gradeOptions, handleAddCourse, handleSaveAnywayWithCreditLimit, handleSaveSemester,
     handleGeneratePDF, fetchPool, resetForm, calculateCurrentCredits, getMaxCreditsDisplay,
     isExceedingLimit, getCleanPrereq, getGradeColor,
-    fetchCreditLimitFromSummary,    currentSemesterCourses,
-    isLoadingSemesterDetail,
-    fetchSemesterDetail
+    fetchCreditLimitFromSummary, currentSemesterCourses,
+    isLoadingSemesterDetail, fetchSemesterDetail, semesterStandings,
+    
+    // New exemption exports
+    exemptionSemester,
+    fetchExemptionSemester,
+    handleSaveExemption,
+    handleEditExemption,
+    handleDeleteExemption,
+    isExemptionView,
+    setIsExemptionView,
   };
 };

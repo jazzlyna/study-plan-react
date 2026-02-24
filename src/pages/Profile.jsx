@@ -20,6 +20,7 @@ function Profile({ user }) {
     student_department: "",
     cgpa: "0.00",
     credits: "0",
+    total_credits: "0",
     deferment_medical: "0",
     deferment_normal: "0"
   });
@@ -45,6 +46,7 @@ function Profile({ user }) {
           student_department: profileData.student_department || "",
           cgpa: summaryData.student_cgpa?.toFixed(2) || "0.00",
           credits: summaryData.count_completed_course || "0",
+          total_credits: summaryData.total_credit_hour || "0",
           deferment_medical: profileData.deferment_medical?.toString() || "0",
           deferment_normal: profileData.deferment_normal?.toString() || "0"
         });
@@ -130,6 +132,10 @@ function Profile({ user }) {
               <label className="profile-label">Completed</label>
               <p className="profile-stat-value">{formData.credits}</p>
             </div>
+            <div className="profile-stat-mini-card">
+    <label className="profile-label">Total Credits</label>
+    <p className="profile-stat-value">{formData.total_credits}</p>
+  </div>
           </div>
 
           {gotAnalysis && (
@@ -148,6 +154,7 @@ function Profile({ user }) {
           <h4 className="profile-section-title">Student Details</h4>
           
           <div className="profile-info-list">
+
             
             <div className="profile-info-item">
               <div className="profile-icon-circle"><FaEnvelope /></div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';  
 import { 
   FaChevronLeft, FaEdit, FaTrash, FaExclamationTriangle, 
-  FaTimes, FaFilePdf, FaPlus, FaCalendarAlt  
+  FaTimes, FaFilePdf, FaPlus, FaCalendarAlt,  FaStar
 } from 'react-icons/fa';
 import { api } from "../utils/api";
 import { generatePDFReport } from '../utils/reportGenerator';
@@ -65,20 +65,28 @@ function StudyPlan({ user }) {
     fetchCreditLimitFromSummary,
     currentSemesterCourses,
     isLoadingSemesterDetail,
-    fetchSemesterDetail
+    fetchSemesterDetail,
+    semesterStandings,
+    exemptionSemester,
+    fetchExemptionSemester,
+    handleSaveExemption,
+    handleEditExemption,
+    handleDeleteExemption,
+    isExemptionView,
+    setIsExemptionView,
   } = useStudyPlan(user);
 
-  // Add state for deferment modal and inputs
+  // state for deferment modal and inputs
   const [showDefermentModal, setShowDefermentModal] = useState(false);
   const [medicalDeferment, setMedicalDeferment] = useState('');
   const [regularDeferment, setRegularDeferment] = useState('');
   const [isSavingDeferment, setIsSavingDeferment] = useState(false);
   const [defermentError, setDefermentError] = useState('');
 
-  // Add state for credit limit warning
+  // state for credit limit warning
   const [creditWarning, setCreditWarning] = useState(null);
 
-  // Add handleDeleteSemester function
+  // handleDeleteSemester function
   const handleDeleteSemester = async () => {
     if (window.confirm(`Delete Semester ${selectedSem.number}?`)) {
       try {
@@ -164,10 +172,16 @@ const handleEditSemester = () => {
   React.useEffect(() => {
     const checkCreditLimit = async () => {
       if (view === 'view' && selectedSem) {
+        // Skip credit limit check for exemption
+        if (selectedSem.number === 'EXEMPTION') {
+          setCreditWarning(null);
+          return;
+        }
+        
         const semCredits = semesterCredits[selectedSem.number] || 0;
         const maxLimit = await getMaxCreditsDisplay(selectedSem.number);
         
-        if (semCredits > maxLimit) {
+        if (maxLimit !== null && semCredits > maxLimit) {
           setCreditWarning({
             semester: selectedSem.number,
             credits: semCredits,
@@ -341,6 +355,30 @@ const handleEditSemester = () => {
         <div className="header-row">
           <h2 className="dashboard-title">BUILDER</h2>
           <div className="report-button-container" style={{ display: 'flex', gap: '12px' }}>
+
+            <button 
+              onClick={() => {
+                if (exemptionSemester) {
+                  // If exemption exists, view it
+                  setSelectedSem(exemptionSemester);
+                  fetchSemesterDetail('EXEMPTION');
+                  setIsExemptionView(true);
+                  setView('view');
+                } else {
+                  // If no exemption, create new
+                  resetForm();
+                  setSemStatus('Completed'); 
+                  setIsExemptionView(true);
+                  setView('add');
+                }
+              }} 
+              className="download-report-btn"
+              style={{ background: '#8b5cf6' }} 
+            >
+              <FaStar className="pdf-icon" />
+              Exemption
+            </button>
+
             <button 
               onClick={() => {
                 loadDefermentValues();
@@ -367,17 +405,31 @@ const handleEditSemester = () => {
         {/* List View - Semester Cards */}
         {view === 'list' && (
           <div className="sem-buttons-grid">
+            {/* Exemption Card - Show if exists */}
+            {exemptionSemester && (
+              <SemesterCard 
+                sem={exemptionSemester}
+                standing={semesterStandings['EXEMPTION']}
+                onClick={async () => { 
+                  setSelectedSem(exemptionSemester);
+                  await fetchSemesterDetail('EXEMPTION');
+                  setIsExemptionView(true);
+                  setView('view');
+                }}
+              />
+            )}
+            
             {savedSemesters.map((sem) => (
               <SemesterCard 
                 key={sem.number}
                 sem={sem}
-                semesterCredits={semesterCredits}
-                        onClick={async () => { 
-          setSelectedSem(sem);
-          await fetchSemesterDetail(sem.number);  
-          setView('view');
-        }}
-
+                standing={semesterStandings[sem.number]} 
+                onClick={async () => { 
+                  setSelectedSem(sem);
+                  await fetchSemesterDetail(sem.number);  
+                  setIsExemptionView(false);
+                  setView('view');
+                }}
               />
             ))}
             
@@ -395,17 +447,29 @@ const handleEditSemester = () => {
         )}
         
         {/* View Semester Details */}
-        {view === 'view' && selectedSem && (
+                {view === 'view' && selectedSem && (
           <div className="glass-card view-card">
             <div className="view-header">
               <button className="back-btn" onClick={() => setView('list')}>
                 <FaChevronLeft /> Back
               </button>
               <div className="action-btns">
-                <button className="edit-btn" onClick={handleEditSemester}>
+                <button className="edit-btn" onClick={() => {
+                  if (isExemptionView) {
+                    handleEditExemption();
+                  } else {
+                    handleEditSemester();
+                  }
+                }}>
                   <FaEdit /> Edit
                 </button>
-                <button className="delete-btn" onClick={handleDeleteSemester}>
+                <button className="delete-btn" onClick={() => {
+                  if (isExemptionView) {
+                    handleDeleteExemption();
+                  } else {
+                    handleDeleteSemester();
+                  }
+                }}>
                   <FaTrash /> Delete
                 </button>
               </div>
@@ -437,16 +501,18 @@ const handleEditSemester = () => {
                 <div className={`status-badge ${selectedSem.status}`}>{selectedSem.status.toUpperCase()}</div>
               </div>
               <div className="gpa-box">
-                <div className="gpa-label">GPA</div>
-                <div className="gpa-value">{selectedSem.gpa}</div>
-                <div className="gpa-label">
-                  Credit: {semesterCredits[selectedSem.number] || 0} / {(() => {
-                    // Fetch and display limit
-                    getMaxCreditsDisplay(selectedSem.number).then(limit => limit);
-                    return '...';
-                  })()}
-                </div>
-              </div>
+  <div className="gpa-label">GPA</div>
+  <div className="gpa-value">{selectedSem.gpa}</div>
+  <div className="gpa-label">
+    Credit: {semesterCredits[selectedSem.number] || 0} 
+    {selectedSem.number !== 'EXEMPTION' && ' / '}
+    {selectedSem.number !== 'EXEMPTION' && (() => {
+      // Fetch and display limit
+      getMaxCreditsDisplay(selectedSem.number).then(limit => limit);
+      return '...';
+    })()}
+  </div>
+</div>
             </div>
             
             {isLoadingSemesterDetail ? (
@@ -485,13 +551,13 @@ const handleEditSemester = () => {
 )}
         
         {/* Add/Edit Semester View */}
-        {view === 'add' && (
+         {view === 'add' && (
           <div className="builder-grid">
             <SemesterBuilder 
               isEditing={isEditing}
               selectedSem={selectedSem}
-              semStatus={semStatus}
-              setSemStatus={setSemStatus}
+              semStatus={isExemptionView ? 'Completed' : semStatus} 
+              setSemStatus={isExemptionView ? () => {} : setSemStatus} 
               currentSelection={currentSelection}
               setCurrentSelection={setCurrentSelection}
               courseCreditsMap={courseCreditsMap}
@@ -499,14 +565,15 @@ const handleEditSemester = () => {
               setIsDraggingOver={setIsDraggingOver}
               isSaving={isSaving}
               handleAddCourse={handleAddCourse}
-              handleSaveSemester={handleSaveSemester}
+              handleSaveSemester={isExemptionView ? handleSaveExemption : handleSaveSemester}
               resetForm={resetForm}
               calculateCurrentCredits={calculateCurrentCredits}
               getMaxCreditsDisplay={getMaxCreditsDisplay}
               isExceedingLimit={isExceedingLimit}
-              gradeOptions={gradeOptions}
+              gradeOptions={isExemptionView ? ['Exemption'] : gradeOptions}
               savedSemesters={savedSemesters}
               fetchCreditLimitFromSummary={fetchCreditLimitFromSummary}
+              isExemptionView={isExemptionView} 
             />
             
             <CoursePool 
